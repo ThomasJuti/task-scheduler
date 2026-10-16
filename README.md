@@ -103,6 +103,12 @@ Thu 4 h, Fri 4 h, Mon 2 h.
 Manual assignment of several tasks schedules them one after the other in the given order, and is **all or
 nothing**: if one task breaks a rule, none is assigned.
 
+Lists that grow without limit are paginated on the server: tasks and assignments come in pages (`{content, page,
+size, totalElements, totalPages}`, 20 by default, at most 100), with filtering, search and sorting done in the
+database. Only the assignments of the tasks in the page are loaded. The workers list stays complete, but its
+workload comes from a `GROUP BY` instead of loading every assignment. Scheduling and auto-assignment only load the
+assignments that still use hours from the start date (`end_date >= start`), not the whole history.
+
 Concurrent requests cannot overbook a worker or break the rules: every operation locks the rows it relies on
 (`SELECT … FOR UPDATE`) before reading them, always workers first and then tasks by id, so they cannot deadlock.
 Assigning locks the worker and the tasks; editing a worker locks the worker; editing a task or changing its status
@@ -118,7 +124,7 @@ locks the task; a real auto-assignment locks all workers and the pending tasks. 
 2. Candidates are the workers whose skills contain all the task skills (Req3a).
 3. For each candidate, simulate the schedule on its current load — including what this same run already
    assigned — and pick the worker who **finishes the task earliest**. Ties go to the worker with fewer
-   assigned hours, then the lowest id.
+   hours booked from the start date on (finished work does not count), then the lowest id.
 4. Tasks without any compatible worker are returned in `unassigned` with the reason.
 
 `dryRun: true` returns the plan without saving it; the UI shows that preview and asks for confirmation.
@@ -179,13 +185,14 @@ because a busy worker finishes later and loses the task to a free one.
 | Method | Path | Role | Description |
 |---|---|---|---|
 | POST | `/api/auth/login` | public | `{username, password}` → `{token, username, role, expiresAt}` |
-| GET | `/api/tasks?status=&unassigned=` | any | List tasks (with their assignment) |
+| GET | `/api/tasks?status=&unassigned=&q=&page=&size=&sort=` | any | One page of tasks (with their assignment); `q` searches name, skills and assigned worker; `sort` is `id`, `name`, `effortHours` or `status`, optionally `,asc`/`,desc` |
+| GET | `/api/tasks/stats` | any | `{total, pending, done, pendingUnassigned}` |
 | POST / PUT / DELETE | `/api/tasks`, `/api/tasks/{id}` | ADMIN | Create / update / delete a task |
 | PATCH | `/api/tasks/{id}/status` | any | `{status}` — mark done / not done |
-| GET | `/api/workers` | any | List workers with assigned tasks and hours |
+| GET | `/api/workers` | any | All workers with assigned tasks and hours (not paginated: a bounded set, used by the selectors) |
 | POST / PUT / DELETE | `/api/workers`, `/api/workers/{id}` | ADMIN | Create / update / delete a worker |
 | GET | `/api/skills` | any | Known skills (autocomplete) |
-| GET | `/api/assignments?workerId=` | any | Assignments with daily allocations |
+| GET | `/api/assignments?workerId=&page=&size=` | any | One page of assignments with daily allocations and task skills |
 | POST | `/api/assignments` | any | `{workerId, taskIds[], startDate}` — manual assignment |
 | PATCH | `/api/assignments/{id}` | any | `{workerId, startDate}` — move to another worker / date |
 | DELETE | `/api/assignments/{id}` | any | Unassign |
@@ -220,15 +227,17 @@ docker-compose.yml      db + backend + frontend
 
 ## Tests
 
-- **Backend (54 tests):** `WorkCalendarTest` (weekends, partial days, existing load), `AutoAssignmentServiceTest`
+- **Backend (61 tests):** `WorkCalendarTest` (weekends, partial days, existing load), `AutoAssignmentServiceTest`
   (earliest finish, load balancing, unassignable tasks, dry run), `LoginAttemptServiceTest` (lock, unlock, expiry),
   `ProblemJsonHandlersTest` (401/403 body, escaping) and API integration tests with a real
   PostgreSQL: CRUD, validation errors, Req3a, all-or-nothing, reassign, integrity rules, auto-assign, and
   security (401 / 403 per role, generic login errors, lock-out). `ConcurrencyApiTest` keeps a transaction open
   in the middle of an operation and checks that the competing request waits and then gets the right answer
-  (Req3a kept, no effort/hours mismatch, no duplicate-skill error). `SecurityConfigTest` (weak or example JWT
+  (Req3a kept, no effort/hours mismatch, no duplicate-skill error). `PaginationApiTest` (paging, case-insensitive sort, search by name / skill / worker with
+  literal `%`, invalid paging parameters, stats, assignments by worker, finished assignments not counted as
+  workload). `SecurityConfigTest` (weak or example JWT
   secret) and `NginxConfigTest` (nginx overwrites `X-Forwarded-For`, unprivileged port).
-- **Frontend (25 tests):** validators, dates, skills, task sorting, role directive, server-error mapping, auth service
+- **Frontend (25 tests):** validators, dates, skills, table sort to API sort, tasks API query parameters, role directive, server-error mapping, auth service
   + interceptor (token header, logout on 401).
 
 ## Assumptions
