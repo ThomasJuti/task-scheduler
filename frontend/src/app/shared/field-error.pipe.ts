@@ -19,7 +19,7 @@ export class FieldErrorPipe implements PipeTransform {
     if (errors['skillDuplicate']) return `"${errors['skillDuplicate'].skill}" is repeated`;
     if (errors['matDatepickerParse']) return 'Invalid date';
     if (errors['matDatepickerMin']) return 'The date cannot be in the past';
-    if (errors['matDatepickerFilter']) return 'Choose a working day (Mon–Fri)';
+    if (errors['matDatepickerFilter']) return 'Choose a working day (Mon-Fri)';
     return 'Invalid value';
   }
 }

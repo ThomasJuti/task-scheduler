@@ -1,0 +1,107 @@
+<header class="page-header">
+  <div>
+    <h1>Assignments</h1>
+    <p class="subtitle">
+      {{ assignments().length }} assigned · {{ pendingTasks().length }} pending tasks without worker
+    </p>
+  </div>
+  <button
+    mat-flat-button
+    *appRequiresRole="'ADMIN'"
+    (click)="openAutoAssign()"
+    [disabled]="!pendingTasks().length"
+  >
+    <mat-icon>bolt</mat-icon> Auto-assign
+  </button>
+</header>
+
+<div class="grid-2">
+  <section class="panel">
+    <h2><mat-icon>assignment_ind</mat-icon> Assign tasks manually</h2>
+    <form [formGroup]="form" (ngSubmit)="assign()" class="form-column">
+      <mat-form-field appearance="outline">
+        <mat-label>Worker</mat-label>
+        <mat-select formControlName="workerId">
+          @for (worker of workers(); track worker.id) {
+            <mat-option [value]="worker.id">
+              {{ worker.name }} · {{ worker.availabilityHoursPerDay }} h/day
+            </mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ form.controls.workerId.errors | fieldError }}</mat-error>
+      </mat-form-field>
+      @if (selectedWorker(); as worker) {
+        <div class="worker-skills">
+          <span class="muted">Skills:</span> <app-skill-chips [skills]="worker.skills" />
+        </div>
+      }
+      <mat-form-field appearance="outline">
+        <mat-label>Start date</mat-label>
+        <input
+          matInput
+          [matDatepicker]="picker"
+          formControlName="startDate"
+          [min]="today"
+          [matDatepickerFilter]="isWorkingDay"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+        <mat-hint>Working days only (Mon-Fri)</mat-hint>
+        <mat-error>{{ form.controls.startDate.errors | fieldError }}</mat-error>
+      </mat-form-field>
+
+      <div class="task-picker">
+        <div class="task-picker-header">
+          <span>Pending tasks</span>
+          <span class="muted">{{ selectedHours() }} h selected</span>
+        </div>
+        @if (!pendingTasks().length) {
+          <p class="muted empty">No pending unassigned tasks.</p>
+        }
+        <mat-selection-list formControlName="taskIds" class="task-list">
+          @for (task of pendingTasks(); track task.id) {
+            @let missing = missingFor(task);
+            <mat-list-option [value]="task.id" [disabled]="!selectedWorker() || missing.length > 0">
+              <span matListItemTitle>{{ task.name }} · {{ task.effortHours }} h</span>
+              <span matListItemLine>
+                <app-skill-chips [skills]="task.skills" [missing]="missing" />
+                @if (missing.length) {
+                  <span class="missing-text"> missing {{ missing.join(', ') }}</span>
+                }
+              </span>
+            </mat-list-option>
+          }
+        </mat-selection-list>
+      </div>
+      @if (form.controls.taskIds.touched && form.controls.taskIds.invalid) {
+        <p class="form-error">Select at least one task</p>
+      }
+      <button mat-flat-button type="submit" [disabled]="saving()">
+        <mat-icon>add_task</mat-icon> Assign selected tasks
+      </button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title-row">
+      <h2><mat-icon>calendar_month</mat-icon> Current assignments</h2>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="compact">
+        <mat-label>Worker</mat-label>
+        <mat-select [value]="workerFilter()" (valueChange)="workerFilter.set($event)">
+          <mat-option [value]="null">All workers</mat-option>
+          @for (worker of workers(); track worker.id) {
+            <mat-option [value]="worker.id">{{ worker.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <app-assignments-table
+      [assignments]="visibleAssignments()"
+      (reassign)="reassign($event)"
+      (unassign)="unassign($event)"
+    />
+  </section>
+</div>

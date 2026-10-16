@@ -9,78 +9,31 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { filter, switchMap } from 'rxjs';
 
 import { SkillsApi } from '../../core/api/skills-api';
 import { WorkersApi } from '../../core/api/workers-api';
-import { HasRoleDirective } from '../../core/auth/has-role.directive';
+import { RequiresRoleDirective } from '../../core/auth/requires-role.directive';
 import { Worker } from '../../core/models';
-import { ConfirmDialog } from '../../shared/confirm-dialog';
+import { confirmThen } from '../../shared/confirm-dialog';
+import { openEditDialog } from '../../shared/edit-dialog';
 import { SkillChips } from '../../shared/skill-chips';
 import { WorkerDialog, WorkerDialogData } from './worker-dialog';
 
 @Component({
   selector: 'app-workers-page',
-  imports: [FormsModule, MatTableModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatTooltipModule,
-    MatProgressBarModule, HasRoleDirective, SkillChips],
-  template: `
-    <header class="page-header">
-      <div>
-        <h1>Workers</h1>
-        <p class="subtitle">{{ workers().length }} workers · {{ totalCapacity() }} h/day of capacity</p>
-      </div>
-      <button mat-flat-button *appHasRole="'ADMIN'" (click)="openDialog()"><mat-icon>person_add</mat-icon> New worker</button>
-    </header>
-
-    <div class="toolbar-row">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search">
-        <mat-icon matPrefix>search</mat-icon>
-        <mat-label>Search by name or skill</mat-label>
-        <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" maxlength="100" />
-      </mat-form-field>
-    </div>
-
-    <div class="table-card">
-      @if (loading()) { <mat-progress-bar mode="indeterminate" /> }
-      <div class="table-scroll">
-      <table mat-table [dataSource]="rows()">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let w" class="strong">{{ w.name }}</td>
-        </ng-container>
-        <ng-container matColumnDef="availability">
-          <th mat-header-cell *matHeaderCellDef>Availability</th>
-          <td mat-cell *matCellDef="let w">{{ w.availabilityHoursPerDay }} h/day</td>
-        </ng-container>
-        <ng-container matColumnDef="skills">
-          <th mat-header-cell *matHeaderCellDef>Skills</th>
-          <td mat-cell *matCellDef="let w"><app-skill-chips [skills]="w.skills" /></td>
-        </ng-container>
-        <ng-container matColumnDef="load">
-          <th mat-header-cell *matHeaderCellDef>Assigned</th>
-          <td mat-cell *matCellDef="let w">
-            <div class="strong">{{ w.assignedTasks }} task{{ w.assignedTasks === 1 ? '' : 's' }}</div>
-            <div class="muted">{{ w.assignedHours }} h ≈ {{ days(w) }} working day{{ days(w) === 1 ? '' : 's' }}</div>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let w" class="actions">
-            <ng-container *appHasRole="'ADMIN'">
-              <button mat-icon-button matTooltip="Edit" [attr.aria-label]="'Edit ' + w.name" (click)="openDialog(w)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button matTooltip="Delete" [attr.aria-label]="'Delete ' + w.name" (click)="remove(w)"><mat-icon>delete</mat-icon></button>
-            </ng-container>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell empty" [attr.colspan]="columns.length">No workers yet.</td>
-        </tr>
-      </table>
-      </div>
-    </div>
-  `,
+  imports: [
+    FormsModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTooltipModule,
+    MatProgressBarModule,
+    RequiresRoleDirective,
+    SkillChips,
+  ],
+  templateUrl: './workers-page.html',
 })
 export class WorkersPage {
   private readonly workersApi = inject(WorkersApi);
@@ -91,12 +44,17 @@ export class WorkersPage {
   protected readonly columns = ['name', 'availability', 'skills', 'load', 'actions'];
   protected readonly workers = signal<Worker[]>([]);
   protected readonly loading = signal(true);
+  protected readonly loadError = signal(false);
   protected readonly search = signal('');
-  protected readonly totalCapacity = computed(() => this.workers().reduce((sum, w) => sum + w.availabilityHoursPerDay, 0));
+  protected readonly totalCapacity = computed(() =>
+    this.workers().reduce((sum, w) => sum + w.availabilityHoursPerDay, 0),
+  );
   protected readonly rows = computed(() => {
     const q = this.search().trim().toLowerCase();
-    return this.workers().filter((w) =>
-      !q || w.name.toLowerCase().includes(q) || w.skills.some((s) => s.toLowerCase().includes(q)));
+    return this.workers().filter(
+      (w) =>
+        !q || w.name.toLowerCase().includes(q) || w.skills.some((s) => s.toLowerCase().includes(q)),
+    );
   });
 
   constructor() {
@@ -108,37 +66,39 @@ export class WorkersPage {
   }
 
   protected openDialog(worker?: Worker): void {
-    this.skillsApi.list().pipe(
-      switchMap((skillOptions) => this.dialog.open<WorkerDialog, WorkerDialogData, Worker>(WorkerDialog, {
-        data: { worker, skillOptions }, width: '520px',
-      }).afterClosed()),
-      filter(Boolean),
-    ).subscribe((saved) => {
+    openEditDialog<WorkerDialogData, Worker>(this.dialog, this.skillsApi, WorkerDialog, {
+      worker,
+    }).subscribe((saved) => {
       this.snackBar.open(`Worker "${saved.name}" saved`, undefined, { duration: 2500 });
       this.load();
     });
   }
 
   protected remove(worker: Worker): void {
-    const message = worker.assignedTasks > 0
-      ? `${worker.name} has ${worker.assignedTasks} assigned task(s). Deleting the worker leaves them unassigned.`
-      : `Delete ${worker.name}?`;
-    this.dialog.open(ConfirmDialog, { data: { title: 'Delete worker', message } }).afterClosed()
-      .pipe(filter(Boolean), switchMap(() => this.workersApi.delete(worker.id)))
-      .subscribe(() => {
-        this.snackBar.open('Worker deleted', undefined, { duration: 2500 });
-        this.load();
-      });
+    const message =
+      worker.assignedTasks > 0
+        ? `${worker.name} has ${worker.assignedTasks} assigned task(s). Deleting the worker leaves them unassigned.`
+        : `Delete ${worker.name}?`;
+    confirmThen(this.dialog, { title: 'Delete worker', message }, () =>
+      this.workersApi.delete(worker.id),
+    ).subscribe(() => {
+      this.snackBar.open('Worker deleted', undefined, { duration: 2500 });
+      this.load();
+    });
   }
 
-  private load(): void {
+  protected load(): void {
     this.loading.set(true);
+    this.loadError.set(false);
     this.workersApi.list().subscribe({
       next: (workers) => {
         this.workers.set(workers);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.loadError.set(true);
+      },
     });
   }
 }

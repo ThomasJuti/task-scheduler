@@ -1,46 +1,29 @@
 import { Component, computed, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteSelectedEvent,
+} from '@angular/material/autocomplete';
 import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 
+import { SKILL_NAME_MAX } from '../core/validation/limits';
 import { FieldErrorPipe } from './field-error.pipe';
 
 /** Chip input for a list of skills, with autocomplete from the skills that already exist. */
 @Component({
   selector: 'app-skills-input',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatChipsModule, MatIconModule, MatAutocompleteModule, FieldErrorPipe],
-  template: `
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Skills</mat-label>
-      <mat-chip-grid #grid [formControl]="control()" aria-label="Skills">
-        @for (skill of control().value; track skill) {
-          <mat-chip-row (removed)="remove(skill)">
-            {{ skill }}
-            <button matChipRemove [attr.aria-label]="'Remove ' + skill"><mat-icon>cancel</mat-icon></button>
-          </mat-chip-row>
-        }
-        <input
-          placeholder="Type a skill and press Enter"
-          [matChipInputFor]="grid"
-          [matAutocomplete]="auto"
-          [matChipInputSeparatorKeyCodes]="separators"
-          (matChipInputTokenEnd)="add($event)"
-          (input)="query.set($any($event.target).value)"
-          maxlength="50"
-        />
-      </mat-chip-grid>
-      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
-        @for (option of suggestions(); track option) {
-          <mat-option [value]="option">{{ option }}</mat-option>
-        }
-      </mat-autocomplete>
-      <mat-hint>{{ hint() }}</mat-hint>
-      <mat-error>{{ control().errors | fieldError }}</mat-error>
-    </mat-form-field>
-  `,
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatChipsModule,
+    MatIconModule,
+    MatAutocompleteModule,
+    FieldErrorPipe,
+  ],
+  templateUrl: './skills-input.html',
 })
 export class SkillsInput {
   readonly control = input.required<FormControl<string[]>>();
@@ -48,6 +31,7 @@ export class SkillsInput {
   readonly hint = input('Letters, digits, spaces and + # . - /');
 
   protected readonly separators = [ENTER, COMMA];
+  protected readonly skillNameMax = SKILL_NAME_MAX;
   protected readonly query = signal('');
   protected readonly suggestions = computed(() => {
     const q = this.query().trim().toLowerCase();

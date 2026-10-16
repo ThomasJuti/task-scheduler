@@ -9,7 +9,9 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { AssignmentsApi } from '../../core/api/assignments-api';
 import { Assignment, Worker } from '../../core/models';
-import { isWorkingDay, missingSkills, nextWorkingDay, startOfToday, toIsoDate } from '../../core/validation/validators';
+import { isWorkingDay, nextWorkingDay, startOfToday, toIsoDate } from '../../core/dates';
+import { missingSkills } from '../../core/skills';
+import { submitDialogForm } from '../../shared/dialog-form';
 import { FieldErrorPipe } from '../../shared/field-error.pipe';
 
 export interface ReassignDialogData {
@@ -21,39 +23,17 @@ export interface ReassignDialogData {
 /** "Move" a task to another worker and/or start date (allowed for USER and ADMIN). */
 @Component({
   selector: 'app-reassign-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatDatepickerModule, MatButtonModule, FieldErrorPipe],
-  template: `
-    <h2 mat-dialog-title>Move "{{ data.assignment.taskName }}"</h2>
-    <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content class="form-column">
-        <p class="muted">Currently: {{ data.assignment.workerName }}, {{ data.assignment.startDate }} → {{ data.assignment.endDate }}</p>
-        <mat-form-field appearance="outline">
-          <mat-label>Worker</mat-label>
-          <mat-select formControlName="workerId">
-            @for (worker of data.workers; track worker.id) {
-              @let missing = missingFor(worker);
-              <mat-option [value]="worker.id" [disabled]="missing.length > 0">
-                {{ worker.name }} · {{ worker.availabilityHoursPerDay }} h/day
-                @if (missing.length) { <span class="muted"> — missing {{ missing.join(', ') }}</span> }
-              </mat-option>
-            }
-          </mat-select>
-          <mat-hint>Only workers with all the task skills can be selected</mat-hint>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Start date</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="startDate" [min]="today" [matDatepickerFilter]="isWorkingDay" />
-          <mat-datepicker-toggle matIconSuffix [for]="picker" />
-          <mat-datepicker #picker />
-          <mat-error>{{ form.controls.startDate.errors | fieldError }}</mat-error>
-        </mat-form-field>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancel</button>
-        <button mat-flat-button type="submit" [disabled]="saving()">Move task</button>
-      </mat-dialog-actions>
-    </form>
-  `,
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatDatepickerModule,
+    MatButtonModule,
+    FieldErrorPipe,
+  ],
+  templateUrl: './reassign-dialog.html',
 })
 export class ReassignDialog {
   protected readonly data = inject<ReassignDialogData>(MAT_DIALOG_DATA);
@@ -73,16 +53,18 @@ export class ReassignDialog {
   }
 
   protected save(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    const { workerId, startDate } = this.form.getRawValue();
-    this.saving.set(true);
-    this.api.reassign(this.data.assignment.id, { workerId, startDate: toIsoDate(startDate) }).subscribe({
-      next: (assignment) => this.dialogRef.close(assignment),
-      error: () => this.saving.set(false),
-    });
+    submitDialogForm(
+      this.form,
+      () => {
+        const { workerId, startDate } = this.form.getRawValue();
+        return this.api.reassign(this.data.assignment.id, {
+          workerId,
+          startDate: toIsoDate(startDate),
+        });
+      },
+      this.dialogRef,
+      this.saving,
+    );
   }
 
   private initialDate(): Date {

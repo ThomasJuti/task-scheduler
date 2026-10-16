@@ -1,0 +1,33 @@
+<h2 mat-dialog-title>{{ data.worker ? 'Edit worker' : 'New worker' }}</h2>
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content class="form-column">
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" [maxlength]="limits.WORKER_NAME_MAX" cdkFocusInitial />
+      <mat-hint align="end">
+        {{ form.controls.name.value.length }}/{{ limits.WORKER_NAME_MAX }}
+      </mat-hint>
+      <mat-error>{{ form.controls.name.errors | fieldError }}</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Availability (hours/day)</mat-label>
+      <input
+        matInput
+        type="number"
+        formControlName="availabilityHoursPerDay"
+        [min]="limits.AVAILABILITY_MIN"
+        [max]="limits.AVAILABILITY_MAX"
+        step="1"
+      />
+      <mat-hint>
+        Hours per working day (Mon-Fri), {{ limits.AVAILABILITY_MIN }}–{{ limits.AVAILABILITY_MAX }}
+      </mat-hint>
+      <mat-error>{{ form.controls.availabilityHoursPerDay.errors | fieldError }}</mat-error>
+    </mat-form-field>
+    <app-skills-input [control]="form.controls.skills" [options]="data.skillOptions" />
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">Save</button>
+  </mat-dialog-actions>
+</form>

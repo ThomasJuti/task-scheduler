@@ -1,0 +1,29 @@
+<mat-form-field appearance="outline" class="full-width">
+  <mat-label>Skills</mat-label>
+  <mat-chip-grid #grid [formControl]="control()" aria-label="Skills">
+    @for (skill of control().value; track skill) {
+      <mat-chip-row (removed)="remove(skill)">
+        {{ skill }}
+        <button matChipRemove [attr.aria-label]="'Remove ' + skill">
+          <mat-icon>cancel</mat-icon>
+        </button>
+      </mat-chip-row>
+    }
+    <input
+      placeholder="Type a skill and press Enter"
+      [matChipInputFor]="grid"
+      [matAutocomplete]="auto"
+      [matChipInputSeparatorKeyCodes]="separators"
+      (matChipInputTokenEnd)="add($event)"
+      (input)="query.set($any($event.target).value)"
+      [attr.maxlength]="skillNameMax"
+    />
+  </mat-chip-grid>
+  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
+    @for (option of suggestions(); track option) {
+      <mat-option [value]="option">{{ option }}</mat-option>
+    }
+  </mat-autocomplete>
+  <mat-hint>{{ hint() }}</mat-hint>
+  <mat-error>{{ control().errors | fieldError }}</mat-error>
+</mat-form-field>

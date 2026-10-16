@@ -7,9 +7,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TasksApi } from '../../core/api/tasks-api';
-import { applyServerErrors } from '../../core/http/problem';
 import { Task, TaskRequest, TaskStatus } from '../../core/models';
+import {
+  EFFORT_MAX,
+  EFFORT_MIN,
+  TASK_NAME_MAX,
+  TASK_SKILLS_MAX,
+} from '../../core/validation/limits';
 import { integer, notBlank, skillsValidator } from '../../core/validation/validators';
+import { submitDialogForm } from '../../shared/dialog-form';
 import { FieldErrorPipe } from '../../shared/field-error.pipe';
 import { SkillsInput } from '../../shared/skills-input';
 
@@ -20,72 +26,60 @@ export interface TaskDialogData {
 
 @Component({
   selector: 'app-task-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, SkillsInput, FieldErrorPipe],
-  template: `
-    <h2 mat-dialog-title>{{ data.task ? 'Edit task' : 'New task' }}</h2>
-    <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content class="form-column">
-        <mat-form-field appearance="outline">
-          <mat-label>Name</mat-label>
-          <input matInput formControlName="name" maxlength="120" cdkFocusInitial />
-          <mat-hint align="end">{{ form.controls.name.value.length }}/120</mat-hint>
-          <mat-error>{{ form.controls.name.errors | fieldError }}</mat-error>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Effort (hours)</mat-label>
-          <input matInput type="number" formControlName="effortHours" min="1" max="1000" step="1" />
-          <mat-hint>Whole hours, 1–1000</mat-hint>
-          <mat-error>{{ form.controls.effortHours.errors | fieldError }}</mat-error>
-        </mat-form-field>
-        <app-skills-input [control]="form.controls.skills" [options]="data.skillOptions" />
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
-            <mat-option value="NOT_DONE">Not done</mat-option>
-            <mat-option value="DONE">Done</mat-option>
-          </mat-select>
-        </mat-form-field>
-        @if (data.task?.assignment) {
-          <p class="notice">This task is assigned to {{ data.task?.assignment?.workerName }}: effort and skills can only
-            change after unassigning it.</p>
-        }
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancel</button>
-        <button mat-flat-button type="submit" [disabled]="saving()">Save</button>
-      </mat-dialog-actions>
-    </form>
-  `,
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    SkillsInput,
+    FieldErrorPipe,
+  ],
+  templateUrl: './task-dialog.html',
 })
 export class TaskDialog {
   protected readonly data = inject<TaskDialogData>(MAT_DIALOG_DATA);
   private readonly api = inject(TasksApi);
   private readonly dialogRef = inject(MatDialogRef<TaskDialog, Task>);
+  private readonly fb = inject(NonNullableFormBuilder);
   protected readonly saving = signal(false);
+  protected readonly limits = { TASK_NAME_MAX, EFFORT_MIN, EFFORT_MAX };
 
-  protected readonly form = inject(NonNullableFormBuilder).group({
-    name: [this.data.task?.name ?? '', [Validators.required, Validators.maxLength(120), notBlank]],
-    effortHours: [this.data.task?.effortHours ?? (null as unknown as number),
-      [Validators.required, Validators.min(1), Validators.max(1000), integer]],
-    skills: [this.data.task?.skills ?? ([] as string[]), [skillsValidator(20)]],
+  protected readonly form = this.fb.group({
+    name: [
+      this.data.task?.name ?? '',
+      [Validators.required, Validators.maxLength(TASK_NAME_MAX), notBlank],
+    ],
+    // empty for a new task, so the user has to type a value
+    effortHours: this.fb.control<number | null>(this.data.task?.effortHours ?? null, [
+      Validators.required,
+      Validators.min(EFFORT_MIN),
+      Validators.max(EFFORT_MAX),
+      integer,
+    ]),
+    skills: [this.data.task?.skills ?? ([] as string[]), [skillsValidator(TASK_SKILLS_MAX)]],
     status: [this.data.task?.status ?? ('NOT_DONE' as TaskStatus), Validators.required],
   });
 
   protected save(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    const value = this.form.getRawValue();
-    const request: TaskRequest = { ...value, name: value.name.trim(), effortHours: Number(value.effortHours) };
-    this.saving.set(true);
-    const call = this.data.task ? this.api.update(this.data.task.id, request) : this.api.create(request);
-    call.subscribe({
-      next: (task) => this.dialogRef.close(task),
-      error: (err) => {
-        this.saving.set(false);
-        applyServerErrors(this.form, err);
+    submitDialogForm(
+      this.form,
+      () => {
+        const request = this.toRequest();
+        return this.data.task
+          ? this.api.update(this.data.task.id, request)
+          : this.api.create(request);
       },
-    });
+      this.dialogRef,
+      this.saving,
+    );
+  }
+
+  /** Only called on a valid form, where the required validator guarantees an effort. */
+  private toRequest(): TaskRequest {
+    const { name, effortHours, skills, status } = this.form.getRawValue();
+    if (effortHours === null) throw new Error('effortHours is required');
+    return { name: name.trim(), effortHours, skills, status };
   }
 }
