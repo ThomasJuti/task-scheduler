@@ -22,4 +22,9 @@ class NginxConfigTest {
         assertThat(conf).contains("proxy_set_header X-Forwarded-For $remote_addr;");
         assertThat(conf).doesNotContain("$proxy_add_x_forwarded_for");
     }
+
+    @Test
+    void nginxListensOnAnUnprivilegedPort() throws Exception {
+        assertThat(Files.readString(NGINX_CONF)).contains("listen 8080;");
+    }
 }
