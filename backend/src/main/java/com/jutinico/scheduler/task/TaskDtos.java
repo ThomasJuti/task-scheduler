@@ -3,6 +3,7 @@ package com.jutinico.scheduler.task;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.jutinico.scheduler.common.Limits;
 import com.jutinico.scheduler.common.ValidationPatterns;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -18,10 +19,10 @@ public final class TaskDtos {
     }
 
     public record TaskRequest(
-            @NotBlank @Size(max = 120) String name,
-            @NotNull @Min(1) @Max(1000) Integer effortHours,
-            @NotEmpty @Size(max = 20) List<
-                    @NotBlank @Size(max = 50) @Pattern(regexp = ValidationPatterns.SKILL, message = ValidationPatterns.SKILL_MESSAGE)
+            @NotBlank @Size(max = Limits.TASK_NAME_MAX) String name,
+            @NotNull @Min(Limits.EFFORT_MIN) @Max(Limits.EFFORT_MAX) Integer effortHours,
+            @NotEmpty @Size(max = Limits.TASK_SKILLS_MAX) List<
+                    @NotBlank @Size(max = Limits.SKILL_NAME_MAX) @Pattern(regexp = ValidationPatterns.SKILL, message = ValidationPatterns.SKILL_MESSAGE)
                     String> skills,
             @NotNull TaskStatus status) {
     }

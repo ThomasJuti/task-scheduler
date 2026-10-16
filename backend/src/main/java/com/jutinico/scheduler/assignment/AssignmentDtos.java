@@ -3,6 +3,7 @@ package com.jutinico.scheduler.assignment;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.jutinico.scheduler.common.Limits;
 import com.jutinico.scheduler.task.TaskStatus;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotEmpty;
@@ -15,10 +16,10 @@ public final class AssignmentDtos {
     private AssignmentDtos() {
     }
 
-    /** Req3: manual assignment of one or more tasks to a worker from a start date. */
+    /** Req3 (manual assignment): assigns one or more tasks to a worker from a start date. */
     public record AssignRequest(
             @NotNull Long workerId,
-            @NotEmpty @Size(max = 100) @UniqueElements List<@NotNull Long> taskIds,
+            @NotEmpty @Size(max = Limits.TASKS_PER_ASSIGNMENT_MAX) @UniqueElements List<@NotNull Long> taskIds,
             @NotNull @FutureOrPresent LocalDate startDate) {
     }
 
@@ -28,7 +29,7 @@ public final class AssignmentDtos {
             @NotNull @FutureOrPresent LocalDate startDate) {
     }
 
-    /** Req4: auto-assignment. {@code startDate} defaults to today; {@code dryRun} only previews the result. */
+    /** Req4 (auto-assignment of the pending tasks). {@code startDate} defaults to today; {@code dryRun} only previews the result. */
     public record AutoAssignRequest(@FutureOrPresent LocalDate startDate, Boolean dryRun) {
     }
 
