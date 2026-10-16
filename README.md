@@ -41,12 +41,15 @@ That single command builds the images, starts PostgreSQL + API + UI, loads the d
 the requirements against the real API. Then open **http://localhost:4200**.
 
 On the first run the scripts create `.env` from [`.env.example`](.env.example) with a random database
-password and JWT secret. Demo accounts (change them in `.env`):
+password, JWT secret and demo passwords. `scripts/run.sh` prints the two demo accounts:
 
-| User | Password | Role |
-|---|---|---|
-| `admin` | `Admin123!` | ADMIN |
-| `user` | `User123!` | USER |
+| User | Role |
+|---|---|
+| `admin` | ADMIN |
+| `user` | USER |
+
+Everything (UI, API, database) is published on `127.0.0.1` only, so the demo accounts are not reachable from
+other machines.
 
 ### Scripts
 
@@ -80,7 +83,9 @@ cd frontend && npm ci && npm start            # http://localhost:4200, proxies /
 
 - Hours are integers. A task's effort is 1–1000 h; a worker's availability is 1–24 h per working day.
 - **Working days are Monday to Friday.** A start date on a weekend moves to the next Monday.
-- A task can be assigned to **one** worker. `DONE` tasks cannot be assigned or moved.
+- A task can be assigned to **one** worker. `DONE` tasks cannot be assigned, moved or unassigned (their
+  assignment records who did them); mark the task as not done first.
+- Start dates go from today up to 2 years ahead (`Limits.PLANNING_HORIZON_YEARS`).
 - **Req3a:** a worker can take a task only if *every* task skill is one of the worker's skills
   (case-insensitive: `java` = `Java`). Otherwise the API answers `422` listing the missing skills.
 - Skills are created automatically the first time they are used; names are trimmed and de-duplicated.
@@ -98,8 +103,11 @@ Thu 4 h, Fri 4 h, Mon 2 h.
 Manual assignment of several tasks schedules them one after the other in the given order, and is **all or
 nothing**: if one task breaks a rule, none is assigned.
 
-Concurrent requests cannot overbook a worker: manual assignment and reassignment lock the worker's row
-(`SELECT … FOR UPDATE`) before reading its load, and a real auto-assignment locks all workers in id order.
+Concurrent requests cannot overbook a worker or break the rules: every operation locks the rows it relies on
+(`SELECT … FOR UPDATE`) before reading them, always workers first and then tasks by id, so they cannot deadlock.
+Assigning locks the worker and the tasks; editing a worker locks the worker; editing a task or changing its status
+locks the task; a real auto-assignment locks all workers and the pending tasks. New skills are created with
+`INSERT … ON CONFLICT DO NOTHING`, so two requests adding the same new skill do not collide.
 
 ### Auto-assignment (Req4) — greedy, capacity-aware
 
@@ -137,11 +145,14 @@ because a busy worker finishes later and loses the task to a free one.
 - Login: generic "Invalid username or password" (no user enumeration, constant-time check against a dummy
   hash) and temporary lock after 5 failed attempts per username + IP within 5 minutes (`429`). Behind nginx the
   client IP comes from `X-Forwarded-For` (`server.forward-headers-strategy: native`, trusted only from private
-  networks), so one client cannot lock everybody out.
+  networks), so one client cannot lock everybody out. nginx overwrites that header with the real client IP
+  (`$remote_addr`), so a client cannot send a fake one to get around the lock.
 - No secrets in the code: database password, JWT secret and demo passwords come from environment variables
-  (`.env`, git-ignored). The app refuses to start with a JWT secret shorter than 32 characters.
+  (`.env`, git-ignored). The app refuses to start with a JWT secret shorter than 32 characters or with the example value from
+  `.env.example`.
 - CORS limited to the frontend origin; errors never include stack traces or SQL; Actuator exposes only `health`;
-  PostgreSQL and the API are published on `127.0.0.1` only; the containers run as non-root.
+  the UI, the API and PostgreSQL are published on `127.0.0.1` only; the backend and nginx containers run as
+  non-root users (nginx uses the official `nginx-unprivileged` image on port 8080).
 - nginx adds `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`
   and `Permissions-Policy`.
 
@@ -149,7 +160,7 @@ because a busy worker finishes later and loses the task to a free one.
 
 - **Backend (source of truth):** Bean Validation on every request DTO — required fields, lengths, ranges
   (effort 1–1000, availability 1–24), 1–20 skills per task with a safe character set
-  (`letters digits space + # . - /`), unique task ids, start date not in the past. Unknown JSON fields, wrong
+  (`letters digits space + # . - /`), unique task ids, start date from today up to 2 years ahead, no control characters in names. Unknown JSON fields, wrong
   types, invalid enum values and malformed JSON are rejected with `400`. Database `CHECK` / `UNIQUE`
   constraints are a second barrier.
 - Errors follow **RFC 9457** (`application/problem+json`); validation errors include a field map:
@@ -209,12 +220,15 @@ docker-compose.yml      db + backend + frontend
 
 ## Tests
 
-- **Backend (41 tests):** `WorkCalendarTest` (weekends, partial days, existing load), `AutoAssignmentServiceTest`
+- **Backend (54 tests):** `WorkCalendarTest` (weekends, partial days, existing load), `AutoAssignmentServiceTest`
   (earliest finish, load balancing, unassignable tasks, dry run), `LoginAttemptServiceTest` (lock, unlock, expiry),
   `ProblemJsonHandlersTest` (401/403 body, escaping) and API integration tests with a real
   PostgreSQL: CRUD, validation errors, Req3a, all-or-nothing, reassign, integrity rules, auto-assign, and
-  security (401 / 403 per role, generic login errors, lock-out).
-- **Frontend (24 tests):** validators, dates, skills, task sorting, role directive, server-error mapping, auth service
+  security (401 / 403 per role, generic login errors, lock-out). `ConcurrencyApiTest` keeps a transaction open
+  in the middle of an operation and checks that the competing request waits and then gets the right answer
+  (Req3a kept, no effort/hours mismatch, no duplicate-skill error). `SecurityConfigTest` (weak or example JWT
+  secret) and `NginxConfigTest` (nginx overwrites `X-Forwarded-For`, unprivileged port).
+- **Frontend (25 tests):** validators, dates, skills, task sorting, role directive, server-error mapping, auth service
   + interceptor (token header, logout on 401).
 
 ## Assumptions
