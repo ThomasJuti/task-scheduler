@@ -45,7 +45,7 @@ public class SecurityConfig {
     private static final int MIN_SECRET_LENGTH = 32;
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ProblemJsonHandlers problemJson) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -66,11 +66,11 @@ public class SecurityConfig {
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                        .authenticationEntryPoint(ProblemJsonHandlers.unauthorized())
-                        .accessDeniedHandler(ProblemJsonHandlers.forbidden()))
+                        .authenticationEntryPoint(problemJson.unauthorized())
+                        .accessDeniedHandler(problemJson.forbidden()))
                 .exceptionHandling(e -> e
-                        .authenticationEntryPoint(ProblemJsonHandlers.unauthorized())
-                        .accessDeniedHandler(ProblemJsonHandlers.forbidden()));
+                        .authenticationEntryPoint(problemJson.unauthorized())
+                        .accessDeniedHandler(problemJson.forbidden()));
         return http.build();
     }
 
