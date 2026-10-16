@@ -14,7 +14,9 @@ ensure_env
 pretty() { python3 -m json.tool; }
 # id_of COLECCION NOMBRE -> id del elemento con ese nombre
 id_of() {
-  api GET "/api/$1" "$ADMIN" | jq -er --arg name "$2" 'first(.[] | select(.name == $name) | .id)'
+  # /api/tasks es paginado (busca por nombre con ?q=); /api/workers devuelve la lista completa
+  api GET "/api/$1?q=$(jq -rn --arg v "$2" '$v|@uri')" "$ADMIN" \
+    | jq -er --arg name "$2" 'first((.content? // .)[] | select(.name == $name) | .id)'
 }
 # expect ESTADO METODO RUTA TOKEN [JSON] -> imprime la respuesta y comprueba el estado HTTP
 expect() {
