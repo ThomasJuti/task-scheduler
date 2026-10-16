@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { authInterceptor } from '../http/auth.interceptor';
-import { AuthService } from './auth.service';
+import { AuthService, LOGIN_URL } from './auth.service';
 
 describe('AuthService + authInterceptor', () => {
   let auth: AuthService;
@@ -29,8 +29,11 @@ describe('AuthService + authInterceptor', () => {
 
   function loginAs(role: 'ADMIN' | 'USER'): void {
     auth.login('ana', 'secret').subscribe();
-    http.expectOne('/api/auth/login').flush({
-      token: 'jwt-token', username: 'ana', role, expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+    http.expectOne(LOGIN_URL).flush({
+      token: 'jwt-token',
+      username: 'ana',
+      role,
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
     });
   }
 
@@ -44,20 +47,31 @@ describe('AuthService + authInterceptor', () => {
 
   it('adds the bearer token to API calls but not to the login call', () => {
     auth.login('ana', 'secret').subscribe();
-    const loginRequest = http.expectOne('/api/auth/login');
+    const loginRequest = http.expectOne(LOGIN_URL);
     expect(loginRequest.request.headers.has('Authorization')).toBe(false);
-    loginRequest.flush({ token: 'jwt-token', username: 'ana', role: 'USER', expiresAt: new Date(Date.now() + 60_000).toISOString() });
+    loginRequest.flush({
+      token: 'jwt-token',
+      username: 'ana',
+      role: 'USER',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    });
 
     TestBed.inject(HttpClient).get('/api/tasks').subscribe();
-    expect(http.expectOne('/api/tasks').request.headers.get('Authorization')).toBe('Bearer jwt-token');
+    expect(http.expectOne('/api/tasks').request.headers.get('Authorization')).toBe(
+      'Bearer jwt-token',
+    );
   });
 
   it('logs out when the API answers 401', () => {
     loginAs('ADMIN');
     expect(auth.isAdmin()).toBe(true);
 
-    TestBed.inject(HttpClient).get('/api/tasks').subscribe({ error: () => undefined });
-    http.expectOne('/api/tasks').flush({ status: 401 }, { status: 401, statusText: 'Unauthorized' });
+    TestBed.inject(HttpClient)
+      .get('/api/tasks')
+      .subscribe({ error: () => undefined });
+    http
+      .expectOne('/api/tasks')
+      .flush({ status: 401 }, { status: 401, statusText: 'Unauthorized' });
 
     expect(auth.isLoggedIn()).toBe(false);
     expect(sessionStorage.getItem('scheduler.session')).toBeNull();

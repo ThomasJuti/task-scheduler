@@ -7,6 +7,9 @@ import { LoginResponse, Role } from '../models';
 
 const STORAGE_KEY = 'scheduler.session';
 
+/** The only public API call: it must not carry a token and handles its own errors. */
+export const LOGIN_URL = '/api/auth/login';
+
 export interface Session {
   token: string;
   username: string;
@@ -39,7 +42,7 @@ export class AuthService {
   }
 
   login(username: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>('/api/auth/login', { username, password }).pipe(
+    return this.http.post<LoginResponse>(LOGIN_URL, { username, password }).pipe(
       tap((response) => {
         const session: Session = { ...response };
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));

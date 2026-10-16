@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, throwError } from 'rxjs';
 
+import { LOGIN_URL } from '../auth/auth.service';
 import { toProblem } from './problem';
 
 /**
@@ -13,9 +14,10 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
   const snackBar = inject(MatSnackBar);
   return next(request).pipe(
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && request.url !== '/api/auth/login') {
+      if (error instanceof HttpErrorResponse && request.url !== LOGIN_URL) {
         const problem = toProblem(error);
-        const fieldErrors = problem.status === 400 && problem.errors && Object.keys(problem.errors).length > 0;
+        const fieldErrors =
+          problem.status === 400 && problem.errors && Object.keys(problem.errors).length > 0;
         if (!fieldErrors && problem.status !== 401) {
           snackBar.open(problem.detail ?? 'Unexpected error', 'Close', {
             duration: 6000,
