@@ -33,6 +33,7 @@ public class AdminService {
     @Transactional
     public void reset() {
         if (!resetEnabled) {
+            // 404 rather than 403: when disabled the endpoint should look like it does not exist at all
             throw new NotFoundException("Not found");
         }
         assignments.deleteAllInBatch();

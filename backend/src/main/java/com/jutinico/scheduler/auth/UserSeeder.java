@@ -42,8 +42,7 @@ public class UserSeeder implements ApplicationRunner {
         }
         users.findByUsername(username).ifPresentOrElse(user -> {
             if (!passwordEncoder.matches(password, user.getPasswordHash()) || user.getRole() != role) {
-                user.setPasswordHash(passwordEncoder.encode(password));
-                user.setRole(role);
+                user.changeCredentials(passwordEncoder.encode(password), role);
                 log.info("Updated {} account '{}'", role, username);
             }
         }, () -> {

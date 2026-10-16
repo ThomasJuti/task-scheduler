@@ -1,5 +1,7 @@
 package com.jutinico.scheduler.skill;
 
+import java.util.Locale;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,6 +33,6 @@ public class Skill {
 
     /** Skills are compared case-insensitively ("java" == "Java"). */
     public String key() {
-        return name.toLowerCase();
+        return name.toLowerCase(Locale.ROOT);
     }
 }

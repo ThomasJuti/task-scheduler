@@ -2,6 +2,7 @@ package com.jutinico.scheduler.task;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,7 @@ public class TaskService {
         Map<Long, Assignment> byTask = assignments.findAllWithWorker().stream()
                 .collect(Collectors.toMap(a -> a.getTask().getId(), Function.identity()));
         return found.stream()
-                .filter(t -> unassigned == null || unassigned != byTask.containsKey(t.getId()))
+                .filter(t -> matchesAssignmentFilter(unassigned, byTask.containsKey(t.getId())))
                 .map(t -> toResponse(t, byTask.get(t.getId())))
                 .toList();
     }
@@ -63,20 +64,13 @@ public class TaskService {
     public TaskResponse update(Long id, TaskRequest request) {
         Task task = find(id);
         Assignment assignment = assignments.findByTaskId(id).orElse(null);
-        var newSkills = skillService.resolve(request.skills());
+        Set<Skill> newSkills = skillService.resolve(request.skills());
 
-        if (assignment != null) {
-            boolean effortChanged = task.getEffortHours() != request.effortHours();
-            boolean skillsChanged = !sameSkills(task.getSkills(), newSkills);
-            if (effortChanged || skillsChanged) {
-                throw new ConflictException("Task '" + task.getName() + "' is assigned to "
-                        + assignment.getWorker().getName() + "; unassign it before changing its effort or skills");
-            }
+        if (assignment != null && task.wouldChangePlanning(request.effortHours(), newSkills)) {
+            throw new ConflictException("Task '" + task.getName() + "' is assigned to "
+                    + assignment.getWorker().getName() + "; unassign it before changing its effort or skills");
         }
-        task.setName(Names.normalize(request.name()));
-        task.setEffortHours(request.effortHours());
-        task.setSkills(newSkills);
-        task.setStatus(request.status());
+        task.updateDetails(Names.normalize(request.name()), request.effortHours(), newSkills, request.status());
         return toResponse(task, assignment);
     }
 
@@ -84,7 +78,7 @@ public class TaskService {
     @Transactional
     public TaskResponse updateStatus(Long id, TaskStatus status) {
         Task task = find(id);
-        task.setStatus(status);
+        task.changeStatus(status);
         return toResponse(task, assignments.findByTaskId(id).orElse(null));
     }
 
@@ -100,8 +94,12 @@ public class TaskService {
         return tasks.findById(id).orElseThrow(() -> NotFoundException.of("Task", id));
     }
 
-    private static boolean sameSkills(java.util.Set<Skill> a, java.util.Set<Skill> b) {
-        return Skills.isSubset(a, b) && Skills.isSubset(b, a);
+    /** {@code unassigned} null = no filter; true = only tasks without assignment; false = only assigned tasks. */
+    private static boolean matchesAssignmentFilter(Boolean unassigned, boolean isAssigned) {
+        if (unassigned == null) {
+            return true;
+        }
+        return unassigned ? !isAssigned : isAssigned;
     }
 
     static TaskResponse toResponse(Task task, Assignment assignment) {

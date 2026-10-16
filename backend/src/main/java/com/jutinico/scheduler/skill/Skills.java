@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Helpers for the Req3a rule: a task's skills must be a subset of the worker's skills. */
+/** Helpers for Req3a (skills rule: a task's skills must be a subset of the worker's skills). */
 public final class Skills {
 
     private Skills() {
@@ -23,6 +23,11 @@ public final class Skills {
 
     public static boolean isSubset(Collection<Skill> required, Collection<Skill> available) {
         return missing(required, available).isEmpty();
+    }
+
+    /** Same skills ignoring case and order. */
+    public static boolean sameSkills(Collection<Skill> a, Collection<Skill> b) {
+        return isSubset(a, b) && isSubset(b, a);
     }
 
     public static List<String> names(Collection<Skill> skills) {

@@ -1,11 +1,10 @@
 package com.jutinico.scheduler.task;
 
-import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.jutinico.scheduler.skill.Skill;
-import jakarta.persistence.Column;
+import com.jutinico.scheduler.skill.Skills;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -36,9 +35,6 @@ public class Task {
             inverseJoinColumns = @JoinColumn(name = "skill_id"))
     private Set<Skill> skills = new LinkedHashSet<>();
 
-    @Column(updatable = false)
-    private Instant createdAt = Instant.now();
-
     protected Task() {
     }
 
@@ -57,35 +53,35 @@ public class Task {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public int getEffortHours() {
         return effortHours;
-    }
-
-    public void setEffortHours(int effortHours) {
-        this.effortHours = effortHours;
     }
 
     public TaskStatus getStatus() {
         return status;
     }
 
-    public void setStatus(TaskStatus status) {
-        this.status = status;
-    }
-
     public Set<Skill> getSkills() {
         return skills;
     }
 
-    public void setSkills(Set<Skill> skills) {
+    public void updateDetails(String name, int effortHours, Set<Skill> skills, TaskStatus status) {
+        this.name = name;
+        this.effortHours = effortHours;
         this.skills = new LinkedHashSet<>(skills);
+        this.status = status;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
+    /** Marks the task done / not done ("moving" it); the only change a USER may make. */
+    public void changeStatus(TaskStatus status) {
+        this.status = status;
+    }
+
+    /**
+     * Whether the new effort or skills differ from the current ones (skills compared case-insensitively). Such a
+     * change would invalidate an existing schedule or the skills rule, so it is not allowed while assigned.
+     */
+    public boolean wouldChangePlanning(int newEffortHours, Set<Skill> newSkills) {
+        return effortHours != newEffortHours || !Skills.sameSkills(skills, newSkills);
     }
 }

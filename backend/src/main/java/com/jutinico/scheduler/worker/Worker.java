@@ -1,11 +1,9 @@
 package com.jutinico.scheduler.worker;
 
-import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.jutinico.scheduler.skill.Skill;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,9 +29,6 @@ public class Worker {
             inverseJoinColumns = @JoinColumn(name = "skill_id"))
     private Set<Skill> skills = new LinkedHashSet<>();
 
-    @Column(updatable = false)
-    private Instant createdAt = Instant.now();
-
     protected Worker() {
     }
 
@@ -51,27 +46,18 @@ public class Worker {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public int getAvailabilityHoursPerDay() {
         return availabilityHoursPerDay;
-    }
-
-    public void setAvailabilityHoursPerDay(int availabilityHoursPerDay) {
-        this.availabilityHoursPerDay = availabilityHoursPerDay;
     }
 
     public Set<Skill> getSkills() {
         return skills;
     }
 
-    public void setSkills(Set<Skill> skills) {
+    /** Existing schedules are not recomputed; a new availability only applies to future assignments. */
+    public void updateDetails(String name, int availabilityHoursPerDay, Set<Skill> skills) {
+        this.name = name;
+        this.availabilityHoursPerDay = availabilityHoursPerDay;
         this.skills = new LinkedHashSet<>(skills);
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
     }
 }

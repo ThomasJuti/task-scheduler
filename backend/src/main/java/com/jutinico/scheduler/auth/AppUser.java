@@ -42,15 +42,13 @@ public class AppUser {
         return passwordHash;
     }
 
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
     public Role getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
+    /** Used on startup to align the account with the configured password and role. */
+    public void changeCredentials(String passwordHash, Role role) {
+        this.passwordHash = passwordHash;
         this.role = role;
     }
 }

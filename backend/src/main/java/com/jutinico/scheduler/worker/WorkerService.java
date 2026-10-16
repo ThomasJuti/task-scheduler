@@ -2,6 +2,7 @@ package com.jutinico.scheduler.worker;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.jutinico.scheduler.assignment.Assignment;
@@ -9,6 +10,7 @@ import com.jutinico.scheduler.assignment.AssignmentRepository;
 import com.jutinico.scheduler.common.ConflictException;
 import com.jutinico.scheduler.common.Names;
 import com.jutinico.scheduler.common.NotFoundException;
+import com.jutinico.scheduler.skill.Skill;
 import com.jutinico.scheduler.skill.SkillService;
 import com.jutinico.scheduler.skill.Skills;
 import com.jutinico.scheduler.worker.WorkerDtos.WorkerRequest;
@@ -60,7 +62,7 @@ public class WorkerService {
     @Transactional
     public WorkerResponse update(Long id, WorkerRequest request) {
         Worker worker = find(id);
-        var newSkills = skillService.resolve(request.skills());
+        Set<Skill> newSkills = skillService.resolve(request.skills());
         List<Assignment> current = assignments.findByWorkerId(id);
         for (Assignment assignment : current) {
             List<String> missing = Skills.missing(assignment.getTask().getSkills(), newSkills);
@@ -69,9 +71,7 @@ public class WorkerService {
                         + "', which requires " + missing + "; unassign it before removing those skills");
             }
         }
-        worker.setName(Names.normalize(request.name()));
-        worker.setAvailabilityHoursPerDay(request.availabilityHoursPerDay());
-        worker.setSkills(newSkills);
+        worker.updateDetails(Names.normalize(request.name()), request.availabilityHoursPerDay(), newSkills);
         return toResponse(worker, current);
     }
 

@@ -1,6 +1,5 @@
 package com.jutinico.scheduler.assignment;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +8,6 @@ import com.jutinico.scheduler.scheduling.Schedule;
 import com.jutinico.scheduler.task.Task;
 import com.jutinico.scheduler.worker.Worker;
 import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -43,9 +41,6 @@ public class Assignment {
     @CollectionTable(name = "assignment_allocation", joinColumns = @JoinColumn(name = "assignment_id"))
     @OrderBy("workDate")
     private List<Allocation> allocations = new ArrayList<>();
-
-    @Column(updatable = false)
-    private Instant createdAt = Instant.now();
 
     protected Assignment() {
     }
@@ -95,9 +90,5 @@ public class Assignment {
 
     public List<Allocation> getAllocations() {
         return allocations;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
     }
 }

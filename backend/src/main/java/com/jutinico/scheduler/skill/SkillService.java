@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -36,7 +37,7 @@ public class SkillService {
         Map<String, String> byKey = new LinkedHashMap<>();
         for (String raw : names) {
             String name = Names.normalize(raw);
-            byKey.putIfAbsent(name.toLowerCase(), name);
+            byKey.putIfAbsent(name.toLowerCase(Locale.ROOT), name);
         }
         Map<String, Skill> existing = skills.findByKeys(byKey.keySet()).stream()
                 .collect(Collectors.toMap(Skill::key, Function.identity()));
