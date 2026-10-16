@@ -1,9 +1,11 @@
 package com.jutinico.scheduler.api;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,5 +54,78 @@ class CrudApiTest extends ApiIntegrationTest {
         mvc.perform(as(adminToken, get("/api/workers"))).andExpect(jsonPath("$", hasSize(1)));
         mvc.perform(as(adminToken, delete("/api/workers/" + id))).andExpect(status().isNoContent());
         mvc.perform(as(adminToken, get("/api/workers"))).andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void skillsAreSharedAndDeduplicatedCaseInsensitively() throws Exception {
+        long worker = createWorker("Ana", 8, "[\"Java\", \"JAVA\", \" java \"]");
+        createTask("API", 4, "[\"java\", \"Sql\"]");
+
+        mvc.perform(as(adminToken, get("/api/workers/" + worker))).andExpect(jsonPath("$.skills", contains("Java")));
+        // the task reuses the existing "Java" skill instead of creating "java"
+        mvc.perform(as(adminToken, get("/api/skills"))).andExpect(jsonPath("$", contains("Java", "Sql")));
+    }
+
+    @Test
+    void changingTheSkillsOfAnAssignedTaskIsRejected() throws Exception {
+        long ana = createWorker("Ana", 8, "[\"Java\", \"SQL\"]");
+        long task = createTask("API", 8, "[\"Java\"]");
+        assign(ana, task);
+
+        mvc.perform(json(adminToken, put("/api/tasks/" + task),
+                        "{\"name\":\"API\",\"effortHours\":8,\"skills\":[\"Java\",\"SQL\"],\"status\":\"NOT_DONE\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value(containsString("unassign it before")));
+        // the status may still change, it does not affect the schedule
+        mvc.perform(json(adminToken, put("/api/tasks/" + task),
+                        "{\"name\":\"API\",\"effortHours\":8,\"skills\":[\"JAVA\"],\"status\":\"DONE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("DONE"));
+    }
+
+    @Test
+    void unassignedFilterSplitsAssignedAndPendingTasks() throws Exception {
+        long ana = createWorker("Ana", 8, "[\"Java\"]");
+        long assigned = createTask("Assigned", 4, "[\"Java\"]");
+        long pending = createTask("Pending", 4, "[\"Java\"]");
+        assign(ana, assigned);
+
+        mvc.perform(as(adminToken, get("/api/tasks?unassigned=true")))
+                .andExpect(jsonPath("$[*].id", contains((int) pending)));
+        mvc.perform(as(adminToken, get("/api/tasks?unassigned=false")))
+                .andExpect(jsonPath("$[*].id", contains((int) assigned)));
+        mvc.perform(as(adminToken, get("/api/tasks"))).andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    @Test
+    void deletingAWorkerRemovesItsAssignmentsButKeepsTheTasks() throws Exception {
+        long ana = createWorker("Ana", 8, "[\"Java\"]");
+        long task = createTask("API", 8, "[\"Java\"]");
+        assign(ana, task);
+
+        mvc.perform(as(adminToken, delete("/api/workers/" + ana))).andExpect(status().isNoContent());
+
+        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(as(adminToken, get("/api/tasks/" + task)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.assignment").doesNotExist());
+    }
+
+    @Test
+    void deletingAnAssignedTaskRemovesItsAssignment() throws Exception {
+        long ana = createWorker("Ana", 8, "[\"Java\"]");
+        long task = createTask("API", 8, "[\"Java\"]");
+        assign(ana, task);
+
+        mvc.perform(as(adminToken, delete("/api/tasks/" + task))).andExpect(status().isNoContent());
+
+        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(as(adminToken, get("/api/workers/" + ana))).andExpect(jsonPath("$.assignedHours").value(0));
+    }
+
+    private void assign(long workerId, long taskId) throws Exception {
+        mvc.perform(json(userToken, post("/api/assignments"),
+                        "{\"workerId\":%d,\"taskIds\":[%d],\"startDate\":\"%s\"}".formatted(workerId, taskId, NEXT_MONDAY)))
+                .andExpect(status().isCreated());
     }
 }
