@@ -96,9 +96,14 @@ public class AssignmentService {
         return toResponse(assignment);
     }
 
+    /** Una tarea DONE queda con su asignación como registro de quién la hizo; para quitarla, márcala como no hecha. */
     @Transactional
     public void unassign(Long id) {
         Assignment assignment = assignments.findById(id).orElseThrow(() -> NotFoundException.of("Assignment", id));
+        Task task = lockTask(assignment.getTask().getId());
+        if (task.getStatus() == TaskStatus.DONE) {
+            throw new ConflictException("Task '" + task.getName() + "' is done; mark it as not done before unassigning it");
+        }
         assignments.delete(assignment);
     }
 

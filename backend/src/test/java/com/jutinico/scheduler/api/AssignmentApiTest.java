@@ -141,4 +141,22 @@ class AssignmentApiTest extends ApiIntegrationTest {
         mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(2)));
         mvc.perform(as(adminToken, get("/api/tasks?unassigned=true"))).andExpect(jsonPath("$", hasSize(1)));
     }
+
+    @Test
+    void doneTasksKeepTheirAssignmentUntilMarkedNotDone() throws Exception {
+        long ana = createWorker("Ana", 8, "[\"Java\"]");
+        long task = createTask("API", 4, "[\"Java\"]");
+        String created = mvc.perform(json(userToken, post("/api/assignments"),
+                        "{\"workerId\":%d,\"taskIds\":[%d],\"startDate\":\"%s\"}".formatted(ana, task, NEXT_MONDAY)))
+                .andReturn().getResponse().getContentAsString();
+        long assignmentId = ((Number) JsonPath.read(created, "$[0].id")).longValue();
+        mvc.perform(json(userToken, patch("/api/tasks/" + task + "/status"), "{\"status\":\"DONE\"}"));
+
+        mvc.perform(as(userToken, delete("/api/assignments/" + assignmentId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail", containsString("mark it as not done")));
+
+        mvc.perform(json(userToken, patch("/api/tasks/" + task + "/status"), "{\"status\":\"NOT_DONE\"}"));
+        mvc.perform(as(userToken, delete("/api/assignments/" + assignmentId))).andExpect(status().isNoContent());
+    }
 }

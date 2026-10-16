@@ -34,6 +34,7 @@
           matTooltip="Unassign"
           [attr.aria-label]="'Unassign ' + a.taskName"
           (click)="unassign.emit(a)"
+          [disabled]="a.taskStatus === 'DONE'"
         >
           <mat-icon>link_off</mat-icon>
         </button>
