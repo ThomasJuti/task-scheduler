@@ -43,7 +43,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "4200:8080"
+      - "127.0.0.1:4200:8080"   # solo accesible desde esta máquina
 
 volumes:
   db-data:

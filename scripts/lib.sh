@@ -43,9 +43,11 @@ random_secret() {
 ensure_env() {
   local env_file="$ROOT_DIR/.env"
   if [ ! -f "$env_file" ]; then
-    info "Creating .env from .env.example with random DB password and JWT secret"
+    info "Creating .env from .env.example with random passwords and JWT secret"
     sed -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(random_secret)|" \
         -e "s|^JWT_SECRET=.*|JWT_SECRET=$(random_secret)|" \
+        -e "s|^APP_ADMIN_PASSWORD=.*|APP_ADMIN_PASSWORD=$(random_secret | cut -c1-16)|" \
+        -e "s|^APP_USER_PASSWORD=.*|APP_USER_PASSWORD=$(random_secret | cut -c1-16)|" \
         "$ROOT_DIR/.env.example" > "$env_file"
     chmod 600 "$env_file"
   fi
