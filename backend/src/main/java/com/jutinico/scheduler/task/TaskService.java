@@ -62,7 +62,7 @@ public class TaskService {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public TaskResponse update(Long id, TaskRequest request) {
-        Task task = find(id);
+        Task task = lock(id);
         Assignment assignment = assignments.findByTaskId(id).orElse(null);
         Set<Skill> newSkills = skillService.resolve(request.skills());
 
@@ -76,7 +76,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponse updateStatus(Long id, TaskStatus status) {
-        Task task = find(id);
+        Task task = lock(id);
         task.changeStatus(status);
         return toResponse(task, assignments.findByTaskId(id).orElse(null));
     }
@@ -91,6 +91,11 @@ public class TaskService {
 
     private Task find(Long id) {
         return tasks.findById(id).orElseThrow(() -> NotFoundException.of("Task", id));
+    }
+
+    /** Espera a que termine una asignación en curso de esta tarea antes de comprobar si está asignada. */
+    private Task lock(Long id) {
+        return tasks.findByIdForUpdate(id).orElseThrow(() -> NotFoundException.of("Task", id));
     }
 
     /** {@code unassigned} null = sin filtro; true = solo tareas sin asignar; false = solo tareas asignadas. */

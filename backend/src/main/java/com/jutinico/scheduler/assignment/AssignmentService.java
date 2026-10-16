@@ -82,11 +82,11 @@ public class AssignmentService {
     @Transactional
     public AssignmentResponse reassign(Long id, ReassignRequest request) {
         Assignment assignment = assignments.findById(id).orElseThrow(() -> NotFoundException.of("Assignment", id));
-        Task task = assignment.getTask();
+        Worker worker = lockWorker(request.workerId());
+        Task task = lockTask(assignment.getTask().getId());
         if (task.getStatus() == TaskStatus.DONE) {
             throw new ConflictException("Task '" + task.getName() + "' is already done and cannot be rescheduled");
         }
-        Worker worker = lockWorker(request.workerId());
         requireSkills(worker, task);
 
         Map<LocalDate, Integer> used = WorkerLoad.usedHours(assignments.findByWorkerId(worker.getId()), assignment.getId());
@@ -107,8 +107,13 @@ public class AssignmentService {
         return workers.findByIdForUpdate(id).orElseThrow(() -> NotFoundException.of("Worker", id));
     }
 
+    private Task lockTask(Long id) {
+        return tasks.findByIdForUpdate(id).orElseThrow(() -> NotFoundException.of("Task", id));
+    }
+
+    /** Bloquea las tareas (después del trabajador, por id) para que nadie cambie su estado, esfuerzo o skills mientras se asignan. */
     private List<Task> findTasksInOrder(List<Long> ids) {
-        Map<Long, Task> byId = tasks.findAllById(ids).stream().collect(Collectors.toMap(Task::getId, Function.identity()));
+        Map<Long, Task> byId = tasks.findAllByIdForUpdate(ids).stream().collect(Collectors.toMap(Task::getId, Function.identity()));
         Set<Long> missing = ids.stream().filter(id -> !byId.containsKey(id)).collect(Collectors.toCollection(TreeSet::new));
         if (!missing.isEmpty()) {
             throw new NotFoundException("Tasks not found: " + missing);

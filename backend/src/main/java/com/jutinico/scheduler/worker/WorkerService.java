@@ -61,7 +61,8 @@ public class WorkerService {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public WorkerResponse update(Long id, WorkerRequest request) {
-        Worker worker = find(id);
+        // Bloquea al trabajador: así no se cruza con una asignación que se apoya en las skills que se van a quitar
+        Worker worker = workers.findByIdForUpdate(id).orElseThrow(() -> NotFoundException.of("Worker", id));
         Set<Skill> newSkills = skillService.resolve(request.skills());
         List<Assignment> current = assignments.findByWorkerId(id);
         for (Assignment assignment : current) {

@@ -57,7 +57,7 @@ public class AutoAssignmentService {
         // manual concurrente no reserve las mismas horas. Un dry run no guarda nada, así que no bloquea a nadie.
         List<Worker> allWorkers = dryRun ? workers.findAllByOrderByIdAsc() : workers.findAllForUpdate();
         Map<Long, WorkerBookings> bookings = loadByWorker(allWorkers);
-        List<Task> pending = new ArrayList<>(tasks.findPendingUnassigned());
+        List<Task> pending = new ArrayList<>(dryRun ? tasks.findPendingUnassigned() : tasks.findPendingUnassignedForUpdate());
         pending.sort(PRIORITY);
 
         List<AutoAssignedItem> assigned = new ArrayList<>();

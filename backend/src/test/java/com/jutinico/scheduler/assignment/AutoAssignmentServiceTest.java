@@ -130,6 +130,7 @@ class AutoAssignmentServiceTest {
         when(workers.findAllByOrderByIdAsc()).thenReturn(allWorkers);   // dry run (simulación)
         when(workers.findAllForUpdate()).thenReturn(allWorkers);        // ejecución real (bloquea a los trabajadores)
         when(tasks.findPendingUnassigned()).thenReturn(pending);
+        when(tasks.findPendingUnassignedForUpdate()).thenReturn(pending);  // ejecución real (bloquea las tareas)
     }
 
     private Worker worker(String name, int availability, String... skills) {
