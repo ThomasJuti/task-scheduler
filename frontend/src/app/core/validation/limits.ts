@@ -1,0 +1,13 @@
+/**
+ * Field limits used by the forms. They mirror
+ * backend/src/main/java/com/jutinico/scheduler/common/Limits.java: change both together.
+ */
+export const TASK_NAME_MAX = 120;
+export const WORKER_NAME_MAX = 120;
+export const EFFORT_MIN = 1;
+export const EFFORT_MAX = 1000;
+export const AVAILABILITY_MIN = 1;
+export const AVAILABILITY_MAX = 24;
+export const TASK_SKILLS_MAX = 20;
+export const WORKER_SKILLS_MAX = 30;
+export const SKILL_NAME_MAX = 50;

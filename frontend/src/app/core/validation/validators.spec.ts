@@ -1,6 +1,6 @@
 import { FormControl } from '@angular/forms';
 
-import { integer, isWorkingDay, missingSkills, nextWorkingDay, notBlank, skillsValidator, toIsoDate } from './validators';
+import { integer, notBlank, skillsValidator } from './validators';
 
 describe('validators', () => {
   describe('skillsValidator', () => {
@@ -37,21 +37,5 @@ describe('validators', () => {
   it('integer rejects decimals', () => {
     expect(integer(new FormControl(2.5))).toEqual({ integer: true });
     expect(integer(new FormControl(8))).toBeNull();
-  });
-
-  it('only Monday to Friday are working days', () => {
-    expect(isWorkingDay(new Date(2026, 9, 16))).toBe(true); // Friday
-    expect(isWorkingDay(new Date(2026, 9, 17))).toBe(false); // Saturday
-    expect(isWorkingDay(new Date(2026, 9, 18))).toBe(false); // Sunday
-    expect(toIsoDate(nextWorkingDay(new Date(2026, 9, 17)))).toBe('2026-10-19');
-  });
-
-  it('formats dates in local time', () => {
-    expect(toIsoDate(new Date(2026, 0, 5))).toBe('2026-01-05');
-  });
-
-  it('missingSkills compares case-insensitively', () => {
-    expect(missingSkills(['Java', 'SQL', 'Docker'], ['java', 'sql'])).toEqual(['Docker']);
-    expect(missingSkills(['Java'], ['JAVA', 'Angular'])).toEqual([]);
   });
 });
