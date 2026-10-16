@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 
 class ValidationApiTest extends ApiIntegrationTest {
 
@@ -76,5 +77,20 @@ class ValidationApiTest extends ApiIntegrationTest {
         mvc.perform(json(userToken, post("/api/assignments"),
                         "{\"workerId\":%d,\"taskIds\":[%d],\"startDate\":\"%s\"}".formatted(ana, task, NEXT_MONDAY.plusYears(1))))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void controlCharactersInNamesAreAValidationError() throws Exception {
+        mvc.perform(json(adminToken, post("/api/tasks"),
+                        "{\"name\":\"a\\u0000b\",\"effortHours\":1,\"skills\":[\"Java\"],\"status\":\"NOT_DONE\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.name").value("must not contain control characters"));
+        mvc.perform(json(adminToken, post("/api/workers"),
+                        "{\"name\":\"Ana\\nB\",\"availabilityHoursPerDay\":8,\"skills\":[\"Java\"]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.name").exists());
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"ad\\u0000min\",\"password\":\"x\"}"))
+                .andExpect(status().isBadRequest());
     }
 }

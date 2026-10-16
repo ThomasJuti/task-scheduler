@@ -19,7 +19,8 @@ public final class TaskDtos {
     }
 
     public record TaskRequest(
-            @NotBlank @Size(max = Limits.TASK_NAME_MAX) String name,
+            @NotBlank @Size(max = Limits.TASK_NAME_MAX)
+            @Pattern(regexp = ValidationPatterns.NO_CONTROL_CHARS, message = ValidationPatterns.NO_CONTROL_CHARS_MESSAGE) String name,
             @NotNull @Min(Limits.EFFORT_MIN) @Max(Limits.EFFORT_MAX) Integer effortHours,
             @NotEmpty @Size(max = Limits.TASK_SKILLS_MAX) List<
                     @NotBlank @Size(max = Limits.SKILL_NAME_MAX) @Pattern(regexp = ValidationPatterns.SKILL, message = ValidationPatterns.SKILL_MESSAGE)

@@ -7,6 +7,11 @@ public final class ValidationPatterns {
 
     public static final String SKILL_MESSAGE = "may only contain letters, digits, spaces and + # . - /";
 
+    /** Sin caracteres de control (NUL, saltos de línea, tabuladores…): PostgreSQL rechaza NUL en texto y daba un 409 engañoso. */
+    public static final String NO_CONTROL_CHARS = "^\\P{Cntrl}*$";
+
+    public static final String NO_CONTROL_CHARS_MESSAGE = "must not contain control characters";
+
     private ValidationPatterns() {
     }
 }

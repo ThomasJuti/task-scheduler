@@ -18,7 +18,8 @@ public final class WorkerDtos {
     }
 
     public record WorkerRequest(
-            @NotBlank @Size(max = Limits.WORKER_NAME_MAX) String name,
+            @NotBlank @Size(max = Limits.WORKER_NAME_MAX)
+            @Pattern(regexp = ValidationPatterns.NO_CONTROL_CHARS, message = ValidationPatterns.NO_CONTROL_CHARS_MESSAGE) String name,
             @NotNull @Min(Limits.AVAILABILITY_MIN) @Max(Limits.AVAILABILITY_MAX) Integer availabilityHoursPerDay,
             @NotEmpty @Size(max = Limits.WORKER_SKILLS_MAX) List<
                     @NotBlank @Size(max = Limits.SKILL_NAME_MAX) @Pattern(regexp = ValidationPatterns.SKILL, message = ValidationPatterns.SKILL_MESSAGE)
