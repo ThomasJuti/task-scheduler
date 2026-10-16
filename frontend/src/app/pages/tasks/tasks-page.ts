@@ -53,6 +53,7 @@ type StatusFilter = 'ALL' | 'NOT_DONE' | 'DONE';
 
     <div class="table-card">
       @if (loading()) { <mat-progress-bar mode="indeterminate" /> }
+      <div class="table-scroll">
       <table mat-table [dataSource]="rows()" matSort (matSortChange)="sort.set($event)">
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
@@ -88,8 +89,8 @@ type StatusFilter = 'ALL' | 'NOT_DONE' | 'DONE';
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let task" class="actions">
             <ng-container *appHasRole="'ADMIN'">
-              <button mat-icon-button matTooltip="Edit" (click)="openDialog(task)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button matTooltip="Delete" (click)="remove(task)"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button matTooltip="Edit" [attr.aria-label]="'Edit ' + task.name" (click)="openDialog(task)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button matTooltip="Delete" [attr.aria-label]="'Delete ' + task.name" (click)="remove(task)"><mat-icon>delete</mat-icon></button>
             </ng-container>
           </td>
         </ng-container>
@@ -99,6 +100,7 @@ type StatusFilter = 'ALL' | 'NOT_DONE' | 'DONE';
           <td class="mat-cell empty" [attr.colspan]="columns.length">No tasks match the current filters.</td>
         </tr>
       </table>
+      </div>
     </div>
   `,
 })

@@ -112,6 +112,7 @@ import { ReassignDialog, ReassignDialogData } from './reassign-dialog';
           </mat-form-field>
         </div>
         @if (loading()) { <mat-progress-bar mode="indeterminate" /> }
+        <div class="table-scroll">
         <table mat-table [dataSource]="visibleAssignments()">
           <ng-container matColumnDef="task">
             <th mat-header-cell *matHeaderCellDef>Task</th>
@@ -133,9 +134,9 @@ import { ReassignDialog, ReassignDialogData } from './reassign-dialog';
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let a" class="actions">
-              <button mat-icon-button matTooltip="Move to another worker or date" (click)="reassign(a)"
+              <button mat-icon-button matTooltip="Move to another worker or date" [attr.aria-label]="'Move ' + a.taskName + ' to another worker or date'" (click)="reassign(a)"
                       [disabled]="a.taskStatus === 'DONE'"><mat-icon>swap_horiz</mat-icon></button>
-              <button mat-icon-button matTooltip="Unassign" (click)="unassign(a)"><mat-icon>link_off</mat-icon></button>
+              <button mat-icon-button matTooltip="Unassign" [attr.aria-label]="'Unassign ' + a.taskName" (click)="unassign(a)"><mat-icon>link_off</mat-icon></button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -144,6 +145,7 @@ import { ReassignDialog, ReassignDialogData } from './reassign-dialog';
             <td class="mat-cell empty" [attr.colspan]="columns.length">No assignments yet.</td>
           </tr>
         </table>
+        </div>
       </section>
     </div>
   `,

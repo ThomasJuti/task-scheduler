@@ -42,6 +42,7 @@ import { WorkerDialog, WorkerDialogData } from './worker-dialog';
 
     <div class="table-card">
       @if (loading()) { <mat-progress-bar mode="indeterminate" /> }
+      <div class="table-scroll">
       <table mat-table [dataSource]="rows()">
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Name</th>
@@ -66,8 +67,8 @@ import { WorkerDialog, WorkerDialogData } from './worker-dialog';
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let w" class="actions">
             <ng-container *appHasRole="'ADMIN'">
-              <button mat-icon-button matTooltip="Edit" (click)="openDialog(w)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button matTooltip="Delete" (click)="remove(w)"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button matTooltip="Edit" [attr.aria-label]="'Edit ' + w.name" (click)="openDialog(w)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button matTooltip="Delete" [attr.aria-label]="'Delete ' + w.name" (click)="remove(w)"><mat-icon>delete</mat-icon></button>
             </ng-container>
           </td>
         </ng-container>
@@ -77,6 +78,7 @@ import { WorkerDialog, WorkerDialogData } from './worker-dialog';
           <td class="mat-cell empty" [attr.colspan]="columns.length">No workers yet.</td>
         </tr>
       </table>
+      </div>
     </div>
   `,
 })

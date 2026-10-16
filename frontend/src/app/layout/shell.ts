@@ -13,17 +13,17 @@ import { AuthService } from '../core/auth/auth.service';
   imports: [RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule],
   template: `
     <mat-toolbar class="topbar">
-      <span class="brand"><mat-icon>event_available</mat-icon> Task Scheduler</span>
-      <nav class="nav">
-        <a mat-button routerLink="/tasks" routerLinkActive="active"><mat-icon>checklist</mat-icon> Tasks</a>
-        <a mat-button routerLink="/workers" routerLinkActive="active"><mat-icon>groups</mat-icon> Workers</a>
-        <a mat-button routerLink="/assignments" routerLinkActive="active"><mat-icon>calendar_month</mat-icon> Assignments</a>
+      <span class="brand"><mat-icon>event_available</mat-icon><span class="brand-label">Task Scheduler</span></span>
+      <nav class="nav" aria-label="Main">
+        <a mat-button routerLink="/tasks" routerLinkActive="active" aria-label="Tasks"><mat-icon>checklist</mat-icon><span class="nav-label">Tasks</span></a>
+        <a mat-button routerLink="/workers" routerLinkActive="active" aria-label="Workers"><mat-icon>groups</mat-icon><span class="nav-label">Workers</span></a>
+        <a mat-button routerLink="/assignments" routerLinkActive="active" aria-label="Assignments"><mat-icon>calendar_month</mat-icon><span class="nav-label">Assignments</span></a>
       </nav>
       <span class="spacer"></span>
       @if (auth.user(); as user) {
-        <button mat-button [matMenuTriggerFor]="menu" class="user-button">
+        <button mat-button [matMenuTriggerFor]="menu" class="user-button" [attr.aria-label]="'Account menu, ' + user.username">
           <mat-icon>account_circle</mat-icon>
-          {{ user.username }}
+          <span class="user-name">{{ user.username }}</span>
           <span class="role-badge" [class.admin]="user.role === 'ADMIN'">{{ user.role }}</span>
         </button>
         <mat-menu #menu="matMenu">
