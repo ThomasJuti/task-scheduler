@@ -2,6 +2,7 @@ package com.jutinico.scheduler.config;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -89,6 +90,10 @@ public class SecurityConfig {
         String secret = properties.jwtSecret();
         if (secret == null || secret.length() < MIN_SECRET_LENGTH) {
             throw new IllegalStateException("JWT_SECRET must be set and have at least " + MIN_SECRET_LENGTH + " characters");
+        }
+        // El valor de .env.example es público: con él cualquiera podría firmar tokens de ADMIN.
+        if (secret.toLowerCase(Locale.ROOT).contains("change-me")) {
+            throw new IllegalStateException("JWT_SECRET still has the example value; generate one with: openssl rand -base64 48");
         }
         return new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
