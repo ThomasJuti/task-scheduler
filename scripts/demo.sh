@@ -4,6 +4,7 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 require python3 "It is used to pretty-print the JSON responses."
+require jq "$JQ_HINT"
 
 "$ROOT_DIR/scripts/run.sh"
 echo
@@ -13,7 +14,7 @@ ensure_env
 pretty() { python3 -m json.tool; }
 # id_of COLLECTION NAME -> id of the item with that name
 id_of() {
-  api GET "/api/$1" "$ADMIN" | python3 -c "import json,sys; print(next(x['id'] for x in json.load(sys.stdin) if x['name']==sys.argv[1]))" "$2"
+  api GET "/api/$1" "$ADMIN" | jq -er --arg name "$2" 'first(.[] | select(.name == $name) | .id)'
 }
 # expect STATUS METHOD PATH TOKEN [JSON] -> prints the response and checks the HTTP status
 expect() {

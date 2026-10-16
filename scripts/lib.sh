@@ -65,12 +65,17 @@ wait_for_backend() {
   ok "Backend is up"
 }
 
+# jq builds and parses the JSON, so names and passwords with quotes or backslashes are escaped correctly.
+JQ_HINT="Install it with 'brew install jq' (macOS) or 'sudo apt-get install jq' (Debian/Ubuntu)."
+
 # Logs in and prints the JWT. Usage: TOKEN=$(login user password)
 login() {
-  local response
+  require jq "$JQ_HINT"
+  local body response
+  body=$(jq -n --arg u "$1" --arg p "$2" '{username: $u, password: $p}')
   response=$(curl -fsS -X POST "$API_URL/api/auth/login" -H 'Content-Type: application/json' \
-    -d "{\"username\":\"$1\",\"password\":\"$2\"}") || fail "Login failed for '$1'"
-  printf '%s' "$response" | sed -E 's/.*"token":"([^"]+)".*/\1/'
+    -d "$body") || fail "Login failed for '$1'"
+  printf '%s' "$response" | jq -r '.token'
 }
 
 # api METHOD PATH TOKEN [JSON] -> prints the body; returns non-zero on HTTP errors
@@ -83,7 +88,7 @@ api() {
   fi
 }
 
-# Extracts the numeric "id" of a JSON object returned by the API
+# Extracts the "id" of a JSON object returned by the API (reads stdin)
 json_id() {
-  sed -E 's/^\{"id":([0-9]+).*/\1/'
+  jq -r '.id'
 }

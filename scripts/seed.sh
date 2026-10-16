@@ -5,6 +5,7 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 require curl ""
+require jq "$JQ_HINT"
 ensure_env
 
 TOKEN=$(login "${APP_ADMIN_USERNAME:-admin}" "$APP_ADMIN_PASSWORD")
@@ -14,11 +15,13 @@ info "Resetting data"
 api DELETE /api/admin/reset "$TOKEN" >/dev/null || fail "Reset failed: set ADMIN_RESET_ENABLED=true in .env and restart (scripts/run.sh)"
 
 worker() { # name hours skills-json
-  api POST /api/workers "$TOKEN" "{\"name\":\"$1\",\"availabilityHoursPerDay\":$2,\"skills\":$3}" >/dev/null
+  api POST /api/workers "$TOKEN" "$(jq -n --arg name "$1" --argjson hours "$2" --argjson skills "$3" \
+    '{name: $name, availabilityHoursPerDay: $hours, skills: $skills}')" >/dev/null
   printf '  %-16s %2s h/day  %s\n' "$1" "$2" "$3"
 }
 task() { # name effort skills-json [status]
-  api POST /api/tasks "$TOKEN" "{\"name\":\"$1\",\"effortHours\":$2,\"skills\":$3,\"status\":\"${4:-NOT_DONE}\"}" >/dev/null
+  api POST /api/tasks "$TOKEN" "$(jq -n --arg name "$1" --argjson effort "$2" --argjson skills "$3" \
+    --arg status "${4:-NOT_DONE}" '{name: $name, effortHours: $effort, skills: $skills, status: $status}')" >/dev/null
   printf '  %-34s %3s h  %-9s %s\n' "$1" "$2" "${4:-NOT_DONE}" "$3"
 }
 
