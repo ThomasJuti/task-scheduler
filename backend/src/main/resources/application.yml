@@ -20,6 +20,10 @@ spring:
       enabled: true
 
 server:
+  # Behind nginx the TCP peer is the proxy, so getRemoteAddr() would be the same for every client and the
+  # login lock-out (keyed by username + IP) would lock everyone out. "native" makes Tomcat's RemoteIpValve
+  # read X-Forwarded-For, trusting only private-network proxies (the Docker network), so clients cannot spoof it.
+  forward-headers-strategy: native
   error:
     include-stacktrace: never
     include-message: never
@@ -53,4 +57,5 @@ app:
     user-password: ${APP_USER_PASSWORD:}
     cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
     max-login-attempts: 5
+    # How long a username + IP stays locked, and also how long a failed attempt counts towards the limit.
     login-lock-duration: 5m

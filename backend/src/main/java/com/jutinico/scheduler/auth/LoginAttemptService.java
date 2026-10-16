@@ -10,13 +10,15 @@ import com.jutinico.scheduler.config.AppSecurityProperties;
 import org.springframework.stereotype.Service;
 
 /**
- * Basic brute-force protection: after N failed logins for the same username + IP the pair is locked for a
- * while. In memory, which is enough for a single instance.
+ * Basic brute-force protection: after N failed logins for the same username + IP within the lock duration, the
+ * pair is locked for that same duration. Failures older than that are forgotten, so occasional typos never add
+ * up to a lock and the map does not grow forever. In memory, which is enough for a single instance.
  */
 @Service
 public class LoginAttemptService {
 
-    private record Attempts(int failures, Instant lockedUntil) {
+    /** Failures counted so far and when the last one happened (also when the lock, if any, started). */
+    private record Attempts(int failures, Instant lastFailure) {
     }
 
     private final Map<String, Attempts> attempts = new ConcurrentHashMap<>();
@@ -33,26 +35,39 @@ public class LoginAttemptService {
     /** Remaining lock time, or {@link Duration#ZERO} when the key may try again. */
     public Duration lockRemaining(String key) {
         Attempts current = attempts.get(key);
-        if (current == null || current.lockedUntil() == null) {
+        if (current == null || current.failures() < maxAttempts) {
             return Duration.ZERO;
         }
-        Duration remaining = Duration.between(clock.instant(), current.lockedUntil());
+        Duration remaining = Duration.between(clock.instant(), expiry(current));
         if (remaining.isNegative() || remaining.isZero()) {
-            attempts.remove(key);
+            attempts.remove(key, current);
             return Duration.ZERO;
         }
         return remaining;
     }
 
     public void recordFailure(String key) {
+        Instant now = clock.instant();
+        attempts.values().removeIf(entry -> isExpired(entry, now));
         attempts.compute(key, (k, current) -> {
-            int failures = (current == null ? 0 : current.failures()) + 1;
-            Instant lockedUntil = failures >= maxAttempts ? clock.instant().plus(lockDuration) : null;
-            return new Attempts(failures, lockedUntil);
+            int previous = current == null || isExpired(current, now) ? 0 : current.failures();
+            return new Attempts(previous + 1, now);
         });
     }
 
     public void reset(String key) {
         attempts.remove(key);
+    }
+
+    /**
+     * A failure counts for {@code lockDuration}. While locked no new failures are recorded (the login is
+     * rejected before the password is checked), so the lock also ends {@code lockDuration} after the last one.
+     */
+    private Instant expiry(Attempts entry) {
+        return entry.lastFailure().plus(lockDuration);
+    }
+
+    private boolean isExpired(Attempts entry, Instant now) {
+        return !now.isBefore(expiry(entry));
     }
 }
