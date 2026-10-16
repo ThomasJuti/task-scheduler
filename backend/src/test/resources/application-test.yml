@@ -1,0 +1,8 @@
+app:
+  admin:
+    reset-enabled: true
+  security:
+    jwt-secret: test-secret-that-is-long-enough-for-hs256-signing
+    admin-password: admin-test-pass
+    user-password: user-test-pass
+    max-login-attempts: 3
