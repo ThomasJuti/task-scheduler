@@ -1,6 +1,7 @@
 package com.jutinico.scheduler.assignment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -67,6 +68,7 @@ class AutoAssignmentServiceTest {
         });
         assertThat(result.unassigned()).isEmpty();
         verify(assignments, times(1)).save(any(Assignment.class));
+        verify(workers).findAllForUpdate();
     }
 
     @Test
@@ -83,9 +85,9 @@ class AutoAssignmentServiceTest {
         // Biggest first: Big -> Ana (Mon-Tue), Medium -> Bob (Mon), Small -> Bob (Tue) finishes before Ana's Wed
         assertThat(result.assigned()).extracting(AutoAssignedItem::taskName, AutoAssignedItem::workerName)
                 .containsExactly(
-                        org.assertj.core.groups.Tuple.tuple("Big", "Ana"),
-                        org.assertj.core.groups.Tuple.tuple("Medium", "Bob"),
-                        org.assertj.core.groups.Tuple.tuple("Small", "Bob"));
+                        tuple("Big", "Ana"),
+                        tuple("Medium", "Bob"),
+                        tuple("Small", "Bob"));
         assertThat(result.assigned().get(2).endDate()).isEqualTo(MONDAY.plusDays(1));
     }
 
@@ -113,6 +115,7 @@ class AutoAssignmentServiceTest {
         assertThat(result.dryRun()).isTrue();
         assertThat(result.assigned()).hasSize(1);
         verify(assignments, never()).save(any());
+        verify(workers, never()).findAllForUpdate();
     }
 
     @Test
@@ -124,7 +127,8 @@ class AutoAssignmentServiceTest {
     }
 
     private void given(List<Worker> allWorkers, List<Task> pending) {
-        when(workers.findAllByOrderByIdAsc()).thenReturn(allWorkers);
+        when(workers.findAllByOrderByIdAsc()).thenReturn(allWorkers);   // dry run
+        when(workers.findAllForUpdate()).thenReturn(allWorkers);        // real run (locks the workers)
         when(tasks.findPendingUnassigned()).thenReturn(pending);
     }
 

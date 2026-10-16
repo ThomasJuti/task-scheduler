@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,10 @@ import com.jutinico.scheduler.worker.WorkerRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Manual assignment (Req3) with the skills rule (Req3a). Available to USER and ADMIN. */
+/**
+ * Req3 (manual assignment of tasks to a worker from a start date), enforcing Req3a (skills rule: a task's skills
+ * must be a subset of the worker's). Available to USER and ADMIN.
+ */
 @Service
 public class AssignmentService {
 
@@ -52,7 +56,7 @@ public class AssignmentService {
      */
     @Transactional
     public List<AssignmentResponse> assign(AssignRequest request) {
-        Worker worker = findWorker(request.workerId());
+        Worker worker = lockWorker(request.workerId());
         List<Task> requested = findTasksInOrder(request.taskIds());
 
         Map<Long, Assignment> existing = assignments.findByTaskIdIn(request.taskIds()).stream()
@@ -69,7 +73,7 @@ public class AssignmentService {
             requireSkills(worker, task);
         }
 
-        Map<java.time.LocalDate, Integer> used = WorkerLoad.usedHours(assignments.findByWorkerId(worker.getId()), null);
+        Map<LocalDate, Integer> used = WorkerLoad.usedHours(assignments.findByWorkerId(worker.getId()), null);
         List<AssignmentResponse> created = new ArrayList<>();
         for (Task task : requested) {
             Schedule schedule = WorkCalendar.plan(worker.getAvailabilityHoursPerDay(), used, request.startDate(),
@@ -80,7 +84,10 @@ public class AssignmentService {
         return created;
     }
 
-    /** Moves a task to another worker and/or start date, re-checking Req3a and recomputing the dates. */
+    /**
+     * Moves a task to another worker and/or start date, re-checking Req3a (skills rule) and recomputing the
+     * dates. Only the target worker is locked: freeing hours on the previous worker cannot overbook anyone.
+     */
     @Transactional
     public AssignmentResponse reassign(Long id, ReassignRequest request) {
         Assignment assignment = assignments.findById(id).orElseThrow(() -> NotFoundException.of("Assignment", id));
@@ -88,7 +95,7 @@ public class AssignmentService {
         if (task.getStatus() == TaskStatus.DONE) {
             throw new ConflictException("Task '" + task.getName() + "' is already done and cannot be rescheduled");
         }
-        Worker worker = findWorker(request.workerId());
+        Worker worker = lockWorker(request.workerId());
         requireSkills(worker, task);
 
         Map<LocalDate, Integer> used = WorkerLoad.usedHours(assignments.findByWorkerId(worker.getId()), assignment.getId());
@@ -104,20 +111,24 @@ public class AssignmentService {
         assignments.delete(assignment);
     }
 
-    private Worker findWorker(Long id) {
-        return workers.findById(id).orElseThrow(() -> NotFoundException.of("Worker", id));
+    /**
+     * Loads the worker with a row lock held until commit, before its load is read: otherwise two concurrent
+     * requests could both see the same free hours and overbook the worker's daily availability.
+     */
+    private Worker lockWorker(Long id) {
+        return workers.findByIdForUpdate(id).orElseThrow(() -> NotFoundException.of("Worker", id));
     }
 
     private List<Task> findTasksInOrder(List<Long> ids) {
         Map<Long, Task> byId = tasks.findAllById(ids).stream().collect(Collectors.toMap(Task::getId, Function.identity()));
-        Set<Long> missing = ids.stream().filter(id -> !byId.containsKey(id)).collect(Collectors.toCollection(java.util.TreeSet::new));
+        Set<Long> missing = ids.stream().filter(id -> !byId.containsKey(id)).collect(Collectors.toCollection(TreeSet::new));
         if (!missing.isEmpty()) {
             throw new NotFoundException("Tasks not found: " + missing);
         }
         return ids.stream().map(byId::get).toList();
     }
 
-    /** Req3a: the task's skills must be a subset of the worker's skills. */
+    /** Req3a (skills rule): the task's skills must be a subset of the worker's skills. */
     private static void requireSkills(Worker worker, Task task) {
         List<String> missing = Skills.missing(task.getSkills(), worker.getSkills());
         if (!missing.isEmpty()) {

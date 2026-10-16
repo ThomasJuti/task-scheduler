@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.jutinico.scheduler.assignment.AssignmentDtos.AutoAssignResponse;
 import com.jutinico.scheduler.assignment.AssignmentDtos.AutoAssignedItem;
@@ -23,11 +24,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Req4 — greedy, capacity-aware auto-assignment.
+ * Req4 (auto-assignment of the pending tasks) — greedy and capacity-aware.
  * <ol>
  *   <li>Take every NOT_DONE task without assignment, biggest effort first (ties: more skills, then id),
  *       because big and specialised tasks are the hardest to place.</li>
- *   <li>Candidates are the workers whose skills contain all the task skills (Req3a).</li>
+ *   <li>Candidates are the workers whose skills contain all the task skills (Req3a, skills rule: a task's
+ *       skills must be a subset of the worker's).</li>
  *   <li>For each candidate, simulate the schedule on its current load (including what this run already
  *       assigned) and pick the one that finishes earliest; ties go to the worker with fewer assigned hours,
  *       then the lowest id.</li>
@@ -59,42 +61,24 @@ public class AutoAssignmentService {
     @Transactional
     public AutoAssignResponse run(LocalDate requestedStart, boolean dryRun) {
         LocalDate startDate = WorkCalendar.nextWorkingDay(requestedStart != null ? requestedStart : LocalDate.now(clock));
-        List<Worker> allWorkers = workers.findAllByOrderByIdAsc();
+        // A real run locks every worker (in id order) before reading their load, so a concurrent manual
+        // assignment cannot book the same free hours. A dry run saves nothing, so it does not block anyone.
+        List<Worker> allWorkers = dryRun ? workers.findAllByOrderByIdAsc() : workers.findAllForUpdate();
+        Map<Long, WorkerBookings> bookings = loadByWorker(allWorkers);
         List<Task> pending = new ArrayList<>(tasks.findPendingUnassigned());
         pending.sort(PRIORITY);
-
-        Map<Long, Map<LocalDate, Integer>> loadByWorker = new HashMap<>();
-        Map<Long, Integer> hoursByWorker = new HashMap<>();
-        List<Assignment> current = assignments.findAllWithWorker();
-        for (Worker worker : allWorkers) {
-            List<Assignment> own = current.stream().filter(a -> a.getWorker().getId().equals(worker.getId())).toList();
-            loadByWorker.put(worker.getId(), WorkerLoad.usedHours(own, null));
-            hoursByWorker.put(worker.getId(), own.stream().mapToInt(Assignment::totalHours).sum());
-        }
 
         List<AutoAssignedItem> assigned = new ArrayList<>();
         List<UnassignedItem> unassigned = new ArrayList<>();
         for (Task task : pending) {
-            Candidate best = null;
-            for (Worker worker : allWorkers) {
-                if (!Skills.isSubset(task.getSkills(), worker.getSkills())) {
-                    continue;
-                }
-                Schedule schedule = WorkCalendar.plan(worker.getAvailabilityHoursPerDay(),
-                        loadByWorker.get(worker.getId()), startDate, task.getEffortHours());
-                Candidate candidate = new Candidate(worker, schedule, hoursByWorker.get(worker.getId()));
-                if (best == null || candidate.isBetterThan(best)) {
-                    best = candidate;
-                }
-            }
+            Candidate best = pickBestWorker(task, allWorkers, bookings, startDate);
             if (best == null) {
                 unassigned.add(new UnassignedItem(task.getId(), task.getName(), Skills.names(task.getSkills()),
                         "No worker has all the required skills " + Skills.names(task.getSkills())));
                 continue;
             }
             Worker worker = best.worker();
-            best.schedule().addTo(loadByWorker.get(worker.getId()));
-            hoursByWorker.merge(worker.getId(), task.getEffortHours(), Integer::sum);
+            bookings.get(worker.getId()).book(best.schedule(), task.getEffortHours());
             if (!dryRun) {
                 assignments.save(new Assignment(worker, task, best.schedule()));
             }
@@ -102,6 +86,53 @@ public class AutoAssignmentService {
                     worker.getName(), best.schedule().startDate(), best.schedule().endDate()));
         }
         return new AutoAssignResponse(dryRun, startDate, assigned, unassigned);
+    }
+
+    /** Current bookings of every worker, built from the existing assignments. */
+    private Map<Long, WorkerBookings> loadByWorker(List<Worker> allWorkers) {
+        Map<Long, List<Assignment>> assignmentsByWorker = assignments.findAllWithWorker().stream()
+                .collect(Collectors.groupingBy(a -> a.getWorker().getId()));
+        Map<Long, WorkerBookings> bookings = new HashMap<>();
+        for (Worker worker : allWorkers) {
+            bookings.put(worker.getId(), new WorkerBookings(assignmentsByWorker.getOrDefault(worker.getId(), List.of())));
+        }
+        return bookings;
+    }
+
+    /** The compatible worker that would finish the task first on their current bookings, or null if there is none. */
+    private static Candidate pickBestWorker(Task task, List<Worker> allWorkers, Map<Long, WorkerBookings> bookings,
+                                            LocalDate startDate) {
+        Candidate best = null;
+        for (Worker worker : allWorkers) {
+            if (!Skills.isSubset(task.getSkills(), worker.getSkills())) {
+                continue;
+            }
+            WorkerBookings booked = bookings.get(worker.getId());
+            Schedule schedule = WorkCalendar.plan(worker.getAvailabilityHoursPerDay(), booked.usedHoursByDate,
+                    startDate, task.getEffortHours());
+            Candidate candidate = new Candidate(worker, schedule, booked.assignedHours);
+            if (best == null || candidate.isBetterThan(best)) {
+                best = candidate;
+            }
+        }
+        return best;
+    }
+
+    /** What a worker already has booked; grows as this run assigns tasks to them. */
+    private static final class WorkerBookings {
+
+        private final Map<LocalDate, Integer> usedHoursByDate;
+        private int assignedHours;
+
+        WorkerBookings(List<Assignment> current) {
+            this.usedHoursByDate = WorkerLoad.usedHours(current, null);
+            this.assignedHours = current.stream().mapToInt(Assignment::totalHours).sum();
+        }
+
+        void book(Schedule schedule, int hours) {
+            schedule.addTo(usedHoursByDate);
+            assignedHours += hours;
+        }
     }
 
     private record Candidate(Worker worker, Schedule schedule, int assignedHours) {
