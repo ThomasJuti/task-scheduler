@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -18,8 +19,9 @@ import { TasksApi } from '../../core/api/tasks-api';
 import { WorkersApi } from '../../core/api/workers-api';
 import { RequiresRoleDirective } from '../../core/auth/requires-role.directive';
 import { isWorkingDay, maxPlanningDate, nextWorkingDay, startOfToday, toIsoDate } from '../../core/dates';
-import { Assignment, AutoAssignResult, Task, Worker } from '../../core/models';
+import { Assignment, AutoAssignResult, Page, Task, Worker } from '../../core/models';
 import { missingSkills } from '../../core/skills';
+import { PAGE_SIZE, PAGE_SIZE_MAX } from '../../core/validation/limits';
 import { confirmThen } from '../../shared/confirm-dialog';
 import { FieldErrorPipe } from '../../shared/field-error.pipe';
 import { SkillChips } from '../../shared/skill-chips';
@@ -37,6 +39,7 @@ import { ReassignDialog, ReassignDialogData } from './reassign-dialog';
     MatIconModule,
     MatInputModule,
     MatListModule,
+    MatPaginatorModule,
     MatProgressBarModule,
     MatSelectModule,
     RequiresRoleDirective,
@@ -60,8 +63,14 @@ export class AssignmentsPage {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly workers = signal<Worker[]>([]);
-  protected readonly tasks = signal<Task[]>([]);
+  /** Tareas pendientes sin asignar (las primeras PAGE_SIZE_MAX; pendingTotal dice cuántas hay en total). */
+  protected readonly pendingTasks = signal<Task[]>([]);
+  protected readonly pendingTotal = signal(0);
   protected readonly assignments = signal<Assignment[]>([]);
+  protected readonly assignmentsTotal = signal(0);
+  protected readonly assignmentsPage = signal(0);
+  protected readonly assignmentsPageSize = signal(PAGE_SIZE);
+  protected readonly pageSizeOptions = [10, 20, 50, PAGE_SIZE_MAX];
   protected readonly workerFilter = signal<number | null>(null);
 
   protected readonly form = this.fb.group({
@@ -76,20 +85,11 @@ export class AssignmentsPage {
   protected readonly selectedWorker = computed(
     () => this.workers().find((w) => w.id === this.formValue().workerId) ?? null,
   );
-  protected readonly pendingTasks = computed(() =>
-    this.tasks().filter((t) => t.status === 'NOT_DONE' && !t.assignment),
-  );
   protected readonly selectedHours = computed(() => {
     const ids = new Set(this.formValue().taskIds ?? []);
-    return this.tasks()
+    return this.pendingTasks()
       .filter((t) => ids.has(t.id))
       .reduce((sum, t) => sum + t.effortHours, 0);
-  });
-  protected readonly visibleAssignments = computed(() => {
-    const workerId = this.workerFilter();
-    return workerId
-      ? this.assignments().filter((a) => a.workerId === workerId)
-      : this.assignments();
   });
 
   constructor() {
@@ -140,8 +140,20 @@ export class AssignmentsPage {
       });
   }
 
+  protected onWorkerFilter(workerId: number | null): void {
+    this.workerFilter.set(workerId);
+    this.assignmentsPage.set(0);
+    this.loadAssignments();
+  }
+
+  protected onAssignmentsPage(event: PageEvent): void {
+    this.assignmentsPage.set(event.pageIndex);
+    this.assignmentsPageSize.set(event.pageSize);
+    this.loadAssignments();
+  }
+
   protected reassign(assignment: Assignment): void {
-    const taskSkills = this.tasks().find((t) => t.id === assignment.taskId)?.skills ?? [];
+    const taskSkills = assignment.taskSkills;
     this.dialog
       .open<ReassignDialog, ReassignDialogData, Assignment>(ReassignDialog, {
         data: { assignment, taskSkills, workers: this.workers() },
@@ -194,16 +206,37 @@ export class AssignmentsPage {
     this.loading.set(true);
     forkJoin({
       workers: this.workersApi.list(),
-      tasks: this.tasksApi.list(),
-      assignments: this.assignmentsApi.list(),
+      pending: this.tasksApi.list({ status: 'NOT_DONE', unassigned: true, size: PAGE_SIZE_MAX }),
+      assignments: this.assignmentsApi.list(this.assignmentsQuery()),
     }).subscribe({
-      next: ({ workers, tasks, assignments }) => {
+      next: ({ workers, pending, assignments }) => {
         this.workers.set(workers);
-        this.tasks.set(tasks);
-        this.assignments.set(assignments);
+        this.pendingTasks.set(pending.content);
+        this.pendingTotal.set(pending.totalElements);
+        this.setAssignments(assignments);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  private loadAssignments(): void {
+    this.loading.set(true);
+    this.assignmentsApi.list(this.assignmentsQuery()).subscribe({
+      next: (page) => {
+        this.setAssignments(page);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  private assignmentsQuery() {
+    return { workerId: this.workerFilter(), page: this.assignmentsPage(), size: this.assignmentsPageSize() };
+  }
+
+  private setAssignments(page: Page<Assignment>): void {
+    this.assignments.set(page.content);
+    this.assignmentsTotal.set(page.totalElements);
   }
 }

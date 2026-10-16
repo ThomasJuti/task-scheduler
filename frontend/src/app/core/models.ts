@@ -53,6 +53,7 @@ export interface Assignment {
   taskName: string;
   effortHours: number;
   taskStatus: TaskStatus;
+  taskSkills: string[];
   startDate: string;
   endDate: string;
   allocations: Allocation[];
@@ -105,4 +106,31 @@ export interface Problem {
   title?: string;
   detail?: string;
   errors?: Record<string, string>;
+}
+
+/** Una página de resultados del API (tareas, asignaciones). */
+export interface Page<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface TaskStats {
+  total: number;
+  pending: number;
+  done: number;
+  pendingUnassigned: number;
+}
+
+export type TaskSortField = 'id' | 'name' | 'effortHours' | 'status';
+
+export interface TaskQuery {
+  status?: TaskStatus;
+  unassigned?: boolean;
+  q?: string;
+  page?: number;
+  size?: number;
+  sort?: { field: TaskSortField; direction: 'asc' | 'desc' };
 }

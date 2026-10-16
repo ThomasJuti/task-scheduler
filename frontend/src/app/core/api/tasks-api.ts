@@ -2,18 +2,27 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Task, TaskRequest, TaskStatus } from '../models';
+import { Page, Task, TaskQuery, TaskRequest, TaskStats, TaskStatus } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class TasksApi {
   private readonly http = inject(HttpClient);
   private readonly url = '/api/tasks';
 
-  list(filter: { status?: TaskStatus; unassigned?: boolean } = {}): Observable<Task[]> {
+  /** Una página de tareas; el filtro, la búsqueda y el orden se resuelven en el servidor. */
+  list(query: TaskQuery = {}): Observable<Page<Task>> {
     let params = new HttpParams();
-    if (filter.status) params = params.set('status', filter.status);
-    if (filter.unassigned !== undefined) params = params.set('unassigned', filter.unassigned);
-    return this.http.get<Task[]>(this.url, { params });
+    if (query.status) params = params.set('status', query.status);
+    if (query.unassigned !== undefined) params = params.set('unassigned', query.unassigned);
+    if (query.q?.trim()) params = params.set('q', query.q.trim());
+    if (query.page !== undefined) params = params.set('page', query.page);
+    if (query.size !== undefined) params = params.set('size', query.size);
+    if (query.sort) params = params.set('sort', `${query.sort.field},${query.sort.direction}`);
+    return this.http.get<Page<Task>>(this.url, { params });
+  }
+
+  stats(): Observable<TaskStats> {
+    return this.http.get<TaskStats>(`${this.url}/stats`);
   }
 
   create(task: TaskRequest): Observable<Task> {

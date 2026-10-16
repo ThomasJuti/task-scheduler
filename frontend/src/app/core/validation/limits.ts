@@ -10,3 +10,6 @@ export const WORKER_SKILLS_MAX = 30;
 export const SKILL_NAME_MAX = 50;
 /** La fecha de inicio no puede pasar de hoy + estos años (igual que el backend). */
 export const PLANNING_HORIZON_YEARS = 2;
+/** Tamaño de página de los listados (máximo que acepta el backend: PAGE_SIZE_MAX). */
+export const PAGE_SIZE = 20;
+export const PAGE_SIZE_MAX = 100;

@@ -2,16 +2,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { AssignRequest, Assignment, AutoAssignResult, ReassignRequest } from '../models';
+import { AssignRequest, Assignment, AutoAssignResult, Page, ReassignRequest } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class AssignmentsApi {
   private readonly http = inject(HttpClient);
   private readonly url = '/api/assignments';
 
-  list(workerId?: number): Observable<Assignment[]> {
-    const params = workerId ? new HttpParams().set('workerId', workerId) : undefined;
-    return this.http.get<Assignment[]>(this.url, { params });
+  list(query: { workerId?: number | null; page?: number; size?: number } = {}): Observable<Page<Assignment>> {
+    let params = new HttpParams();
+    if (query.workerId) params = params.set('workerId', query.workerId);
+    if (query.page !== undefined) params = params.set('page', query.page);
+    if (query.size !== undefined) params = params.set('size', query.size);
+    return this.http.get<Page<Assignment>>(this.url, { params });
   }
 
   assign(request: AssignRequest): Observable<Assignment[]> {

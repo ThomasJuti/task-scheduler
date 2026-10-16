@@ -2,7 +2,7 @@
   <div>
     <h1>Assignments</h1>
     <p class="subtitle">
-      {{ assignments().length }} assigned · {{ pendingTasks().length }} pending tasks without worker
+      {{ assignmentsTotal() }} assigned · {{ pendingTotal() }} pending tasks without worker
     </p>
   </div>
   <button
@@ -58,6 +58,10 @@
         </div>
         @if (!pendingTasks().length) {
           <p class="muted empty">No pending unassigned tasks.</p>
+        } @else if (pendingTotal() > pendingTasks().length) {
+          <p class="muted empty">
+            Showing the first {{ pendingTasks().length }} of {{ pendingTotal() }} pending tasks.
+          </p>
         }
         <mat-selection-list formControlName="taskIds" class="task-list">
           @for (task of pendingTasks(); track task.id) {
@@ -88,7 +92,7 @@
       <h2><mat-icon>calendar_month</mat-icon> Current assignments</h2>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="compact">
         <mat-label>Worker</mat-label>
-        <mat-select [value]="workerFilter()" (valueChange)="workerFilter.set($event)">
+        <mat-select [value]="workerFilter()" (valueChange)="onWorkerFilter($event)">
           <mat-option [value]="null">All workers</mat-option>
           @for (worker of workers(); track worker.id) {
             <mat-option [value]="worker.id">{{ worker.name }}</mat-option>
@@ -100,9 +104,17 @@
       <mat-progress-bar mode="indeterminate" />
     }
     <app-assignments-table
-      [assignments]="visibleAssignments()"
+      [assignments]="assignments()"
       (reassign)="reassign($event)"
       (unassign)="unassign($event)"
+    />
+    <mat-paginator
+      [length]="assignmentsTotal()"
+      [pageIndex]="assignmentsPage()"
+      [pageSize]="assignmentsPageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onAssignmentsPage($event)"
+      aria-label="Assignments pages"
     />
   </section>
 </div>
