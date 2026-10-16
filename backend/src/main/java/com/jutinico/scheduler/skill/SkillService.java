@@ -39,8 +39,14 @@ public class SkillService {
         Map<String, Skill> existing = skills.findByKeys(byKey.keySet()).stream()
                 .collect(Collectors.toMap(Skill::key, Function.identity()));
 
+        List<String> missingKeys = byKey.keySet().stream().filter(key -> !existing.containsKey(key)).toList();
+        if (!missingKeys.isEmpty()) {
+            missingKeys.forEach(key -> skills.insertIfAbsent(byKey.get(key)));
+            skills.findByKeys(missingKeys).forEach(skill -> existing.put(skill.key(), skill));
+        }
+
         Set<Skill> result = new LinkedHashSet<>();
-        byKey.forEach((key, name) -> result.add(existing.computeIfAbsent(key, k -> skills.save(new Skill(name)))));
+        byKey.keySet().forEach(key -> result.add(existing.get(key)));
         return result;
     }
 }
