@@ -30,7 +30,7 @@ services:
       APP_USER_PASSWORD: ${APP_USER_PASSWORD:?Set APP_USER_PASSWORD in .env}
       ADMIN_RESET_ENABLED: ${ADMIN_RESET_ENABLED:-false}
       CORS_ALLOWED_ORIGINS: http://localhost:4200
-      TZ: America/Bogota
+      APP_TIMEZONE: ${APP_TIMEZONE:-America/Bogota}
     depends_on:
       db:
         condition: service_healthy
