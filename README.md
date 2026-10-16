@@ -14,11 +14,24 @@ automatically, and plan the work on a Monday–Friday calendar.
 | **Req4** Auto-assignment | `POST /api/assignments/auto` (with dry-run preview) · *Auto-assign* button |
 | Scripts: build / run / test / populate | [`scripts/`](scripts) |
 
+### Requirements glossary
+
+The code and tests refer to the requirements of the technical test by id:
+
+| Id | Meaning |
+|---|---|
+| **Req1** | CRUD of tasks: name, effort in hours, required skills, status done / not done. |
+| **Req2** | CRUD of workers: name, available hours per working day, skills. |
+| **Req3** | Manual assignment: a worker, one or more tasks and a start date. |
+| **Req3a** | Skills rule: a task can only go to a worker who has *all* of its skills (task skills ⊆ worker skills). |
+| **Req4** | Auto-assignment: the app distributes the pending tasks among the compatible workers. |
+
 ---
 
 ## Quick start
 
-Requirements: **Docker Desktop** (running), `curl`, and `python3` for the demo script.
+Requirements: **Docker Desktop** (running), `curl`, `jq` (`brew install jq`; the seed and demo scripts use it to
+build and read JSON) and `python3` for the demo script.
 
 ```bash
 ./scripts/demo.sh
@@ -85,6 +98,9 @@ Thu 4 h, Fri 4 h, Mon 2 h.
 Manual assignment of several tasks schedules them one after the other in the given order, and is **all or
 nothing**: if one task breaks a rule, none is assigned.
 
+Concurrent requests cannot overbook a worker: manual assignment and reassignment lock the worker's row
+(`SELECT … FOR UPDATE`) before reading its load, and a real auto-assignment locks all workers in id order.
+
 ### Auto-assignment (Req4) — greedy, capacity-aware
 
 [`AutoAssignmentService`](backend/src/main/java/com/jutinico/scheduler/assignment/AutoAssignmentService.java):
@@ -119,7 +135,9 @@ because a busy worker finishes later and loses the task to a free one.
   Rules are enforced in the `SecurityFilterChain` **and** with `@PreAuthorize` in the services; the UI hides
   what the role cannot do.
 - Login: generic "Invalid username or password" (no user enumeration, constant-time check against a dummy
-  hash) and temporary lock after 5 failed attempts per username + IP (`429`).
+  hash) and temporary lock after 5 failed attempts per username + IP within 5 minutes (`429`). Behind nginx the
+  client IP comes from `X-Forwarded-For` (`server.forward-headers-strategy: native`, trusted only from private
+  networks), so one client cannot lock everybody out.
 - No secrets in the code: database password, JWT secret and demo passwords come from environment variables
   (`.env`, git-ignored). The app refuses to start with a JWT secret shorter than 32 characters.
 - CORS limited to the frontend origin; errors never include stack traces or SQL; Actuator exposes only `health`;
@@ -183,22 +201,26 @@ backend/                Spring Boot API
 frontend/               Angular 22 + Material (standalone components, signals)
   src/app/core/                 API clients, auth (service, guards, interceptor, role directive), validators
   src/app/pages/                login, tasks, workers, assignments (+ dialogs)
-  nginx.conf                    static hosting, /api proxy, security headers
+  nginx.conf                    static hosting, /api proxy
+  security-headers.conf         security headers, included by every nginx location that sets headers
 scripts/                build / run / stop / test / seed / demo
 docker-compose.yml      db + backend + frontend
 ```
 
 ## Tests
 
-- **Backend (30 tests):** `WorkCalendarTest` (weekends, partial days, existing load), `AutoAssignmentServiceTest`
-  (earliest finish, load balancing, unassignable tasks, dry run) and API integration tests with a real
+- **Backend (41 tests):** `WorkCalendarTest` (weekends, partial days, existing load), `AutoAssignmentServiceTest`
+  (earliest finish, load balancing, unassignable tasks, dry run), `LoginAttemptServiceTest` (lock, unlock, expiry),
+  `ProblemJsonHandlersTest` (401/403 body, escaping) and API integration tests with a real
   PostgreSQL: CRUD, validation errors, Req3a, all-or-nothing, reassign, integrity rules, auto-assign, and
   security (401 / 403 per role, generic login errors, lock-out).
-- **Frontend (16 tests):** validators, server-error mapping, auth service + interceptor (token header, logout on 401).
+- **Frontend (24 tests):** validators, dates, skills, task sorting, role directive, server-error mapping, auth service
+  + interceptor (token header, logout on 401).
 
 ## Assumptions
 
-- "Today" uses the `America/Bogota` time zone (`APP_TIMEZONE`). Public holidays are not considered.
+- "Today" uses the `America/Bogota` time zone (`APP_TIMEZONE`), both in the services and in the `@FutureOrPresent`
+  validation. Public holidays are not considered.
 - Changing a worker's availability keeps the existing schedules (they were valid when planned); new
   assignments use the new value.
 - One worker can have several tasks in parallel only up to their daily availability; tasks are not split
