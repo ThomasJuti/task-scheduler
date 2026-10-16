@@ -27,6 +27,7 @@
         [matDatepicker]="picker"
         formControlName="startDate"
         [min]="today"
+        [max]="maxDate"
         [matDatepickerFilter]="isWorkingDay"
       />
       <mat-datepicker-toggle matIconSuffix [for]="picker" />

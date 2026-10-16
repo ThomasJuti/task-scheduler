@@ -11,7 +11,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { AssignmentsApi } from '../../core/api/assignments-api';
 import { AutoAssignResult } from '../../core/models';
-import { isWorkingDay, nextWorkingDay, startOfToday, toIsoDate } from '../../core/dates';
+import { isWorkingDay, maxPlanningDate, nextWorkingDay, startOfToday, toIsoDate } from '../../core/dates';
 import { FieldErrorPipe } from '../../shared/field-error.pipe';
 import { SkillChips } from '../../shared/skill-chips';
 
@@ -37,6 +37,7 @@ export class AutoAssignDialog {
   private readonly dialogRef = inject(MatDialogRef<AutoAssignDialog, AutoAssignResult>);
 
   protected readonly today = startOfToday();
+  protected readonly maxDate = maxPlanningDate();
   protected readonly isWorkingDay = isWorkingDay;
   protected readonly startDate = new FormControl<Date>(nextWorkingDay(), {
     nonNullable: true,

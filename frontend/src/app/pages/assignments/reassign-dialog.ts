@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { AssignmentsApi } from '../../core/api/assignments-api';
 import { Assignment, Worker } from '../../core/models';
-import { isWorkingDay, nextWorkingDay, startOfToday, toIsoDate } from '../../core/dates';
+import { isWorkingDay, maxPlanningDate, nextWorkingDay, startOfToday, toIsoDate } from '../../core/dates';
 import { missingSkills } from '../../core/skills';
 import { submitDialogForm } from '../../shared/dialog-form';
 import { FieldErrorPipe } from '../../shared/field-error.pipe';
@@ -40,6 +40,7 @@ export class ReassignDialog {
   private readonly dialogRef = inject(MatDialogRef<ReassignDialog, Assignment>);
   protected readonly saving = signal(false);
   protected readonly today = startOfToday();
+  protected readonly maxDate = maxPlanningDate();
   protected readonly isWorkingDay = isWorkingDay;
 
   protected readonly form = inject(NonNullableFormBuilder).group({

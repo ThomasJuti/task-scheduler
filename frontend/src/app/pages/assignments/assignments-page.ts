@@ -17,7 +17,7 @@ import { AssignmentsApi } from '../../core/api/assignments-api';
 import { TasksApi } from '../../core/api/tasks-api';
 import { WorkersApi } from '../../core/api/workers-api';
 import { RequiresRoleDirective } from '../../core/auth/requires-role.directive';
-import { isWorkingDay, nextWorkingDay, startOfToday, toIsoDate } from '../../core/dates';
+import { isWorkingDay, maxPlanningDate, nextWorkingDay, startOfToday, toIsoDate } from '../../core/dates';
 import { Assignment, AutoAssignResult, Task, Worker } from '../../core/models';
 import { missingSkills } from '../../core/skills';
 import { confirmThen } from '../../shared/confirm-dialog';
@@ -55,6 +55,7 @@ export class AssignmentsPage {
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly today = startOfToday();
+  protected readonly maxDate = maxPlanningDate();
   protected readonly isWorkingDay = isWorkingDay;
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);

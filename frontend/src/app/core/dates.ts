@@ -1,3 +1,5 @@
+import { PLANNING_HORIZON_YEARS } from './validation/limits';
+
 export const isWorkingDay = (date: Date | null): boolean => {
   if (!date) return false;
   const day = date.getDay();
@@ -16,6 +18,11 @@ export function startOfToday(): Date {
 }
 
 /** Fecha local como YYYY-MM-DD (toISOString correría el día en offsets UTC negativos como el de Colombia). */
+/** Última fecha de inicio que acepta el backend (hoy + PLANNING_HORIZON_YEARS). */
+export function maxPlanningDate(today = startOfToday()): Date {
+  return new Date(today.getFullYear() + PLANNING_HORIZON_YEARS, today.getMonth(), today.getDate());
+}
+
 export function toIsoDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');

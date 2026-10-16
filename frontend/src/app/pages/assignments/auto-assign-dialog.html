@@ -11,6 +11,7 @@
       [matDatepicker]="picker"
       [formControl]="startDate"
       [min]="today"
+        [max]="maxDate"
       [matDatepickerFilter]="isWorkingDay"
       (dateChange)="preview()"
     />

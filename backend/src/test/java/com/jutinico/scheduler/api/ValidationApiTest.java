@@ -59,4 +59,22 @@ class ValidationApiTest extends ApiIntegrationTest {
                 .andExpect(jsonPath("$.errors.startDate").exists())
                 .andExpect(jsonPath("$.errors.taskIds").exists());
     }
+
+    @Test
+    void startDatesBeyondThePlanningHorizonAreRejected() throws Exception {
+        long ana = createWorker("Ana", 8, "[\"Java\"]");
+        long task = createTask("API", 4, "[\"Java\"]");
+
+        mvc.perform(json(userToken, post("/api/assignments"),
+                        "{\"workerId\":%d,\"taskIds\":[%d],\"startDate\":\"+10003-01-01\"}".formatted(ana, task)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.startDate").exists());
+        // Antes daba 500: la fecha máxima de Java desbordaba el calendario
+        mvc.perform(json(adminToken, post("/api/assignments/auto"), "{\"startDate\":\"+999999999-12-31\",\"dryRun\":true}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.startDate").exists());
+        mvc.perform(json(userToken, post("/api/assignments"),
+                        "{\"workerId\":%d,\"taskIds\":[%d],\"startDate\":\"%s\"}".formatted(ana, task, NEXT_MONDAY.plusYears(1))))
+                .andExpect(status().isCreated());
+    }
 }

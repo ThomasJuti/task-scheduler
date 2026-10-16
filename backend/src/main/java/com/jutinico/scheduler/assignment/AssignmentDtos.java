@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.jutinico.scheduler.common.Limits;
+import com.jutinico.scheduler.common.WithinPlanningHorizon;
 import com.jutinico.scheduler.task.TaskStatus;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotEmpty;
@@ -19,16 +20,16 @@ public final class AssignmentDtos {
     public record AssignRequest(
             @NotNull Long workerId,
             @NotEmpty @Size(max = Limits.TASKS_PER_ASSIGNMENT_MAX) @UniqueElements List<@NotNull Long> taskIds,
-            @NotNull @FutureOrPresent LocalDate startDate) {
+            @NotNull @FutureOrPresent @WithinPlanningHorizon LocalDate startDate) {
     }
 
     public record ReassignRequest(
             @NotNull Long workerId,
-            @NotNull @FutureOrPresent LocalDate startDate) {
+            @NotNull @FutureOrPresent @WithinPlanningHorizon LocalDate startDate) {
     }
 
     /** {@code startDate} es hoy por defecto; {@code dryRun} solo muestra una vista previa. */
-    public record AutoAssignRequest(@FutureOrPresent LocalDate startDate, Boolean dryRun) {
+    public record AutoAssignRequest(@FutureOrPresent @WithinPlanningHorizon LocalDate startDate, Boolean dryRun) {
     }
 
     public record AllocationResponse(LocalDate date, int hours) {

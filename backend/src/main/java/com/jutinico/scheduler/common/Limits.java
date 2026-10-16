@@ -13,6 +13,8 @@ public final class Limits {
     public static final int WORKER_SKILLS_MAX = 30;
     public static final int SKILL_NAME_MAX = 50;
     public static final int TASKS_PER_ASSIGNMENT_MAX = 100;
+    /** Hasta dónde se puede planificar: la fecha de inicio no puede pasar de hoy + estos años. */
+    public static final int PLANNING_HORIZON_YEARS = 2;
 
     private Limits() {
     }

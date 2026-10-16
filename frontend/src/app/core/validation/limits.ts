@@ -8,3 +8,5 @@ export const AVAILABILITY_MAX = 24;
 export const TASK_SKILLS_MAX = 20;
 export const WORKER_SKILLS_MAX = 30;
 export const SKILL_NAME_MAX = 50;
+/** La fecha de inicio no puede pasar de hoy + estos años (igual que el backend). */
+export const PLANNING_HORIZON_YEARS = 2;
