@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Pure scheduling logic: working days are Monday to Friday and a worker can spend at most
- * {@code availabilityPerDay} hours per working day across all of their assignments.
+ * Lógica de planificación pura: los días laborales son de lunes a viernes y un trabajador puede dedicar como máximo
+ * {@code availabilityPerDay} horas por día laboral entre todas sus asignaciones.
  */
 public final class WorkCalendar {
 
@@ -20,7 +20,6 @@ public final class WorkCalendar {
         return day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY;
     }
 
-    /** Returns {@code date} itself when it is a working day, otherwise the following Monday. */
     public static LocalDate nextWorkingDay(LocalDate date) {
         LocalDate current = date;
         while (!isWorkingDay(current)) {
@@ -29,12 +28,7 @@ public final class WorkCalendar {
         return current;
     }
 
-    /**
-     * Plans {@code effortHours} of work starting at {@code startDate}, filling the free capacity of each
-     * working day (availability minus hours already used by other assignments).
-     *
-     * @param usedHoursByDate hours already booked for the worker, by date (not modified)
-     */
+    /** Planifica {@code effortHours} desde {@code startDate} sobre la capacidad libre de cada día laboral; {@code usedHoursByDate} no se modifica. */
     public static Schedule plan(int availabilityPerDay, Map<LocalDate, Integer> usedHoursByDate,
                                 LocalDate startDate, int effortHours) {
         if (availabilityPerDay < 1) {

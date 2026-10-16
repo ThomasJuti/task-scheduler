@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Starts PostgreSQL + backend + frontend with Docker Compose and waits until the API is healthy.
+# Arranca PostgreSQL + backend + frontend con Docker Compose y espera a que la API esté saludable.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 cd "$ROOT_DIR"

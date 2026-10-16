@@ -60,7 +60,7 @@ class SecurityApiTest extends ApiIntegrationTest {
                         "{\"workerId\":%d,\"taskIds\":[%d],\"startDate\":\"%s\"}".formatted(worker, task, NEXT_MONDAY)))
                 .andExpect(status().isCreated());
 
-        // status endpoint does not accept other fields
+        // el endpoint de estado no acepta otros campos
         mvc.perform(json(userToken, patch("/api/tasks/" + task + "/status"), "{\"status\":\"DONE\",\"name\":\"hack\"}"))
                 .andExpect(status().isBadRequest());
         mvc.perform(json(userToken, post("/api/tasks"),

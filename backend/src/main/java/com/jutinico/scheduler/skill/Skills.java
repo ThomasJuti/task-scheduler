@@ -5,13 +5,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Helpers for Req3a (skills rule: a task's skills must be a subset of the worker's skills). */
 public final class Skills {
 
     private Skills() {
     }
 
-    /** Skills required by the task that the worker does not have, sorted by name (empty = compatible). */
     public static List<String> missing(Collection<Skill> required, Collection<Skill> available) {
         Set<String> availableKeys = available.stream().map(Skill::key).collect(Collectors.toSet());
         return required.stream()
@@ -25,7 +23,6 @@ public final class Skills {
         return missing(required, available).isEmpty();
     }
 
-    /** Same skills ignoring case and order. */
     public static boolean sameSkills(Collection<Skill> a, Collection<Skill> b) {
         return isSubset(a, b) && isSubset(b, a);
     }

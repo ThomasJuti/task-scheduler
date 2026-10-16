@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** Security settings, all overridable through environment variables (see application.yml and .env.example). */
 @ConfigurationProperties("app.security")
 public record AppSecurityProperties(
         String jwtSecret,

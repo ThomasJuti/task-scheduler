@@ -12,17 +12,14 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * 401 / 403 responses produced by the security filters, in the same problem+json shape as the API errors.
- * They run before Spring MVC, so the body is serialized here with the application's Jackson mapper.
- */
+/** 401 / 403 de los filtros de seguridad como problem+json. Corren antes de Spring MVC, por eso el cuerpo se serializa aquí. */
 @Component
 class ProblemJsonHandlers {
 
     private final JsonMapper mapper;
 
     ProblemJsonHandlers(JsonMapper mapper) {
-        // Same mix-in Spring MVC uses for ProblemDetail: omits empty fields (instance, properties)
+        // Mismo mix-in que usa Spring MVC para ProblemDetail: omite los campos vacíos (instance, properties)
         this.mapper = mapper.rebuild().addMixIn(ProblemDetail.class, ProblemDetailJacksonMixin.class).build();
     }
 

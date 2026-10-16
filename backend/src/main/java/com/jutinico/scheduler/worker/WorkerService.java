@@ -55,8 +55,8 @@ public class WorkerService {
     }
 
     /**
-     * Existing schedules are kept when the availability changes (they were valid when planned); new
-     * assignments use the new availability. Removing a skill that an assigned task needs is rejected.
+     * Al cambiar la disponibilidad se conservan las planificaciones existentes (eran válidas al planificar); las nuevas
+     * asignaciones usan la nueva. Se rechaza quitar un skill que necesita una tarea asignada.
      */
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional

@@ -26,7 +26,7 @@ class ProblemJsonHandlersTest {
         assertThat((String) JsonPath.read(body, "$.title")).isEqualTo("Unauthorized");
         assertThat((Integer) JsonPath.read(body, "$.status")).isEqualTo(401);
         assertThat((String) JsonPath.read(body, "$.detail")).startsWith("Authentication is required");
-        // Same shape as the MVC error responses: empty fields are omitted (a missing "type" means about:blank)
+        // Misma forma que las respuestas de error de MVC: se omiten los campos vacíos (sin "type" significa about:blank)
         assertThat(body).doesNotContain("\"type\"").doesNotContain("instance").doesNotContain("properties");
     }
 

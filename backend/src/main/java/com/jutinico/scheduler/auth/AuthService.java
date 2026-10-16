@@ -20,7 +20,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final LoginAttemptService loginAttempts;
-    /** Compared against when the user does not exist, so both cases take the same time. */
+    /** Se compara contra este hash cuando el usuario no existe, para que ambos casos tarden lo mismo. */
     private final String dummyHash;
 
     public AuthService(AppUserRepository users, PasswordEncoder passwordEncoder, TokenService tokenService,

@@ -12,7 +12,6 @@ import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { SKILL_NAME_MAX } from '../core/validation/limits';
 import { FieldErrorPipe } from './field-error.pipe';
 
-/** Chip input for a list of skills, with autocomplete from the skills that already exist. */
 @Component({
   selector: 'app-skills-input',
   imports: [

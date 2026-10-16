@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Runs all the tests.
-#   Backend: unit tests + integration tests against a real PostgreSQL started by Testcontainers
-#            (needs JDK 21 and Docker running).
-#   Frontend: Angular unit tests with Vitest (needs Node 22+).
-#   scripts/test.sh backend|frontend runs only one side.
+# Ejecuta todas las pruebas.
+#   Backend: pruebas unitarias + de integración contra un PostgreSQL real levantado por Testcontainers
+#            (requiere JDK 21 y Docker en ejecución).
+#   Frontend: pruebas unitarias de Angular con Vitest (requiere Node 22+).
+#   scripts/test.sh backend|frontend ejecuta solo un lado.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 cd "$ROOT_DIR"

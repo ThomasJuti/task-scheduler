@@ -20,7 +20,6 @@ export interface ReassignDialogData {
   workers: Worker[];
 }
 
-/** "Move" a task to another worker and/or start date (allowed for USER and ADMIN). */
 @Component({
   selector: 'app-reassign-dialog',
   imports: [

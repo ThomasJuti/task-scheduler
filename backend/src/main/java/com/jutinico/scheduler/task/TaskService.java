@@ -74,7 +74,6 @@ public class TaskService {
         return toResponse(task, assignment);
     }
 
-    /** Allowed for USER and ADMIN: only the status changes, the task fields stay untouched. */
     @Transactional
     public TaskResponse updateStatus(Long id, TaskStatus status) {
         Task task = find(id);
@@ -94,7 +93,7 @@ public class TaskService {
         return tasks.findById(id).orElseThrow(() -> NotFoundException.of("Task", id));
     }
 
-    /** {@code unassigned} null = no filter; true = only tasks without assignment; false = only assigned tasks. */
+    /** {@code unassigned} null = sin filtro; true = solo tareas sin asignar; false = solo tareas asignadas. */
     private static boolean matchesAssignmentFilter(Boolean unassigned, boolean isAssigned) {
         if (unassigned == null) {
             return true;

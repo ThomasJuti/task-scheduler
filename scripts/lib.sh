@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers for the scripts in this folder. Sourced, not executed.
+# Funciones compartidas por los scripts de esta carpeta. Se cargan con source, no se ejecutan.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 API_URL="${API_URL:-http://localhost:8080}"
@@ -15,7 +15,7 @@ require() {
   command -v "$1" >/dev/null 2>&1 || fail "'$1' is required. $2"
 }
 
-# Docker Desktop on macOS installs the CLI in ~/.docker/bin, which may not be on PATH yet.
+# Docker Desktop en macOS instala la CLI en ~/.docker/bin, que puede no estar aún en el PATH.
 use_docker() {
   if ! command -v docker >/dev/null 2>&1 && [ -x "$HOME/.docker/bin/docker" ]; then
     export PATH="$HOME/.docker/bin:$PATH"
@@ -24,7 +24,7 @@ use_docker() {
   docker info >/dev/null 2>&1 || fail "Docker is installed but not running. Start Docker Desktop and try again."
 }
 
-# Finds a JDK 21 for the local Maven build (macOS java_home, Homebrew, or the current JAVA_HOME).
+# Busca un JDK 21 para el build local de Maven (java_home de macOS, Homebrew o el JAVA_HOME actual).
 use_java21() {
   if [ -n "${JAVA_HOME:-}" ] && "$JAVA_HOME/bin/java" -version 2>&1 | grep -q 'version "21'; then return; fi
   for candidate in "$(/usr/libexec/java_home -v 21 2>/dev/null || true)" /opt/homebrew/opt/openjdk@21 /usr/local/opt/openjdk@21 /usr/lib/jvm/java-21-openjdk*; do
@@ -39,7 +39,7 @@ random_secret() {
   else LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48; fi
 }
 
-# Creates .env from .env.example on the first run, replacing the placeholder secrets with random ones.
+# Crea .env desde .env.example la primera vez, reemplazando los secretos de ejemplo por otros aleatorios.
 ensure_env() {
   local env_file="$ROOT_DIR/.env"
   if [ ! -f "$env_file" ]; then
@@ -65,10 +65,10 @@ wait_for_backend() {
   ok "Backend is up"
 }
 
-# jq builds and parses the JSON, so names and passwords with quotes or backslashes are escaped correctly.
+# jq construye y lee el JSON, así los nombres y contraseñas con comillas o barras invertidas se escapan bien.
 JQ_HINT="Install it with 'brew install jq' (macOS) or 'sudo apt-get install jq' (Debian/Ubuntu)."
 
-# Logs in and prints the JWT. Usage: TOKEN=$(login user password)
+# Inicia sesión e imprime el JWT. Uso: TOKEN=$(login usuario contraseña)
 login() {
   require jq "$JQ_HINT"
   local body response
@@ -78,7 +78,7 @@ login() {
   printf '%s' "$response" | jq -r '.token'
 }
 
-# api METHOD PATH TOKEN [JSON] -> prints the body; returns non-zero on HTTP errors
+# api METODO RUTA TOKEN [JSON] -> imprime el cuerpo; devuelve distinto de cero en errores HTTP
 api() {
   local method="$1" path="$2" token="$3" body="${4:-}"
   if [ -n "$body" ]; then
@@ -88,7 +88,6 @@ api() {
   fi
 }
 
-# Extracts the "id" of a JSON object returned by the API (reads stdin)
 json_id() {
   jq -r '.id'
 }

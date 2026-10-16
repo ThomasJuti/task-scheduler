@@ -7,7 +7,7 @@ import { LoginResponse, Role } from '../models';
 
 const STORAGE_KEY = 'scheduler.session';
 
-/** The only public API call: it must not carry a token and handles its own errors. */
+/** La única llamada pública de la API: no debe llevar token y maneja sus propios errores. */
 export const LOGIN_URL = '/api/auth/login';
 
 export interface Session {
@@ -18,8 +18,8 @@ export interface Session {
 }
 
 /**
- * Holds the JWT session. It lives in sessionStorage (cleared when the tab closes) and is dropped as soon
- * as the token expires. The backend enforces every permission; the role here only adapts the UI.
+ * Guarda la sesión JWT. Vive en sessionStorage (se borra al cerrar la pestaña) y se descarta en cuanto el token
+ * expira. El backend aplica todos los permisos; el rol aquí solo adapta la interfaz.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {

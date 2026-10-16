@@ -2,7 +2,6 @@ package com.jutinico.scheduler.common;
 
 import org.springframework.http.HttpStatus;
 
-/** Base class for business errors that map to a specific HTTP status. */
 public abstract class ApiException extends RuntimeException {
 
     private final HttpStatus status;

@@ -3,11 +3,7 @@ import { Directive, TemplateRef, ViewContainerRef, effect, inject, input } from 
 import { Role } from '../models';
 import { AuthService } from './auth.service';
 
-/**
- * Renders the element only when the current user has at least the given role, e.g.
- * {@code <button *appRequiresRole="'ADMIN'">}. Roles are hierarchical: ADMIN includes every USER
- * permission, so {@code *appRequiresRole="'USER'"} is also shown to admins.
- */
+/** Muestra el elemento solo si el usuario tiene al menos el rol indicado (ADMIN incluye USER). */
 @Directive({ selector: '[appRequiresRole]' })
 export class RequiresRoleDirective {
   readonly appRequiresRole = input.required<Role>();

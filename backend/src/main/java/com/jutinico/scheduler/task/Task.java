@@ -72,15 +72,11 @@ public class Task {
         this.status = status;
     }
 
-    /** Marks the task done / not done ("moving" it); the only change a USER may make. */
     public void changeStatus(TaskStatus status) {
         this.status = status;
     }
 
-    /**
-     * Whether the new effort or skills differ from the current ones (skills compared case-insensitively). Such a
-     * change would invalidate an existing schedule or the skills rule, so it is not allowed while assigned.
-     */
+    /** Verdadero si cambian el esfuerzo o los skills (sin distinguir mayúsculas); no se permite mientras esté asignada porque invalidaría la planificación. */
     public boolean wouldChangePlanning(int newEffortHours, Set<Skill> newSkills) {
         return effortHours != newEffortHours || !Skills.sameSkills(skills, newSkills);
     }

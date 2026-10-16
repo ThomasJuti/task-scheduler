@@ -62,7 +62,7 @@ class CrudApiTest extends ApiIntegrationTest {
         createTask("API", 4, "[\"java\", \"Sql\"]");
 
         mvc.perform(as(adminToken, get("/api/workers/" + worker))).andExpect(jsonPath("$.skills", contains("Java")));
-        // the task reuses the existing "Java" skill instead of creating "java"
+        // la tarea reutiliza el skill "Java" existente en vez de crear "java"
         mvc.perform(as(adminToken, get("/api/skills"))).andExpect(jsonPath("$", contains("Java", "Sql")));
     }
 
@@ -76,7 +76,7 @@ class CrudApiTest extends ApiIntegrationTest {
                         "{\"name\":\"API\",\"effortHours\":8,\"skills\":[\"Java\",\"SQL\"],\"status\":\"NOT_DONE\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.detail").value(containsString("unassign it before")));
-        // the status may still change, it does not affect the schedule
+        // el estado sí puede cambiar, no afecta la planificación
         mvc.perform(json(adminToken, put("/api/tasks/" + task),
                         "{\"name\":\"API\",\"effortHours\":8,\"skills\":[\"JAVA\"],\"status\":\"DONE\"}"))
                 .andExpect(status().isOk())

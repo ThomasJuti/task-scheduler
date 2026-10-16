@@ -82,7 +82,7 @@ class AutoAssignmentServiceTest {
 
         AutoAssignResponse result = service.run(MONDAY, false);
 
-        // Biggest first: Big -> Ana (Mon-Tue), Medium -> Bob (Mon), Small -> Bob (Tue) finishes before Ana's Wed
+        // Primero el más grande: Big -> Ana (lun-mar), Medium -> Bob (lun), Small -> Bob (mar) termina antes que el miércoles de Ana
         assertThat(result.assigned()).extracting(AutoAssignedItem::taskName, AutoAssignedItem::workerName)
                 .containsExactly(
                         tuple("Big", "Ana"),
@@ -127,8 +127,8 @@ class AutoAssignmentServiceTest {
     }
 
     private void given(List<Worker> allWorkers, List<Task> pending) {
-        when(workers.findAllByOrderByIdAsc()).thenReturn(allWorkers);   // dry run
-        when(workers.findAllForUpdate()).thenReturn(allWorkers);        // real run (locks the workers)
+        when(workers.findAllByOrderByIdAsc()).thenReturn(allWorkers);   // dry run (simulación)
+        when(workers.findAllForUpdate()).thenReturn(allWorkers);        // ejecución real (bloquea a los trabajadores)
         when(tasks.findPendingUnassigned()).thenReturn(pending);
     }
 

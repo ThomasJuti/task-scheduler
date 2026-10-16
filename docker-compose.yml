@@ -10,7 +10,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:5432:5432"   # only reachable from this machine (for running the backend locally)
+      - "127.0.0.1:5432:5432"   # solo accesible desde esta máquina (para correr el backend en local)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -35,7 +35,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8080:8080"   # API + Swagger UI for local use and the seed script
+      - "127.0.0.1:8080:8080"   # API + Swagger UI para uso local y el script de seed
 
   frontend:
     build: ./frontend

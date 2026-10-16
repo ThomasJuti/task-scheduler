@@ -27,7 +27,6 @@ public final class TaskDtos {
             @NotNull TaskStatus status) {
     }
 
-    /** The only change a USER may make to a task ("moving" it between done / not done). */
     public record TaskStatusRequest(@NotNull TaskStatus status) {
     }
 

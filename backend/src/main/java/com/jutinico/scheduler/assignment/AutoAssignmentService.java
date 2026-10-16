@@ -24,17 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Req4 (auto-assignment of the pending tasks) — greedy and capacity-aware.
- * <ol>
- *   <li>Take every NOT_DONE task without assignment, biggest effort first (ties: more skills, then id),
- *       because big and specialised tasks are the hardest to place.</li>
- *   <li>Candidates are the workers whose skills contain all the task skills (Req3a, skills rule: a task's
- *       skills must be a subset of the worker's).</li>
- *   <li>For each candidate, simulate the schedule on its current load (including what this run already
- *       assigned) and pick the one that finishes earliest; ties go to the worker with fewer assigned hours,
- *       then the lowest id.</li>
- *   <li>Tasks without any compatible worker are reported with the reason.</li>
- * </ol>
+ * Asignación automática (Req4), voraz: primero las tareas más grandes (empate: más skills, luego id), cada una al
+ * trabajador compatible que la termine antes (empate: menos horas asignadas, luego menor id). Las tareas que
+ * nadie puede tomar se reportan con su motivo.
  */
 @Service
 public class AutoAssignmentService {
@@ -61,8 +53,8 @@ public class AutoAssignmentService {
     @Transactional
     public AutoAssignResponse run(LocalDate requestedStart, boolean dryRun) {
         LocalDate startDate = WorkCalendar.nextWorkingDay(requestedStart != null ? requestedStart : LocalDate.now(clock));
-        // A real run locks every worker (in id order) before reading their load, so a concurrent manual
-        // assignment cannot book the same free hours. A dry run saves nothing, so it does not block anyone.
+        // Una ejecución real bloquea a todos los trabajadores (por id) antes de leer su carga, para que una asignación
+        // manual concurrente no reserve las mismas horas. Un dry run no guarda nada, así que no bloquea a nadie.
         List<Worker> allWorkers = dryRun ? workers.findAllByOrderByIdAsc() : workers.findAllForUpdate();
         Map<Long, WorkerBookings> bookings = loadByWorker(allWorkers);
         List<Task> pending = new ArrayList<>(tasks.findPendingUnassigned());
@@ -88,7 +80,6 @@ public class AutoAssignmentService {
         return new AutoAssignResponse(dryRun, startDate, assigned, unassigned);
     }
 
-    /** Current bookings of every worker, built from the existing assignments. */
     private Map<Long, WorkerBookings> loadByWorker(List<Worker> allWorkers) {
         Map<Long, List<Assignment>> assignmentsByWorker = assignments.findAllWithWorker().stream()
                 .collect(Collectors.groupingBy(a -> a.getWorker().getId()));
@@ -99,7 +90,6 @@ public class AutoAssignmentService {
         return bookings;
     }
 
-    /** The compatible worker that would finish the task first on their current bookings, or null if there is none. */
     private static Candidate pickBestWorker(Task task, List<Worker> allWorkers, Map<Long, WorkerBookings> bookings,
                                             LocalDate startDate) {
         Candidate best = null;
@@ -118,7 +108,6 @@ public class AutoAssignmentService {
         return best;
     }
 
-    /** What a worker already has booked; grows as this run assigns tasks to them. */
     private static final class WorkerBookings {
 
         private final Map<LocalDate, Integer> usedHoursByDate;

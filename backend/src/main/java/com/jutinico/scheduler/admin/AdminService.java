@@ -28,12 +28,11 @@ public class AdminService {
         this.skills = skills;
     }
 
-    /** Deletes all business data (not the user accounts). Used by the seed script; disabled unless configured. */
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void reset() {
         if (!resetEnabled) {
-            // 404 rather than 403: when disabled the endpoint should look like it does not exist at all
+            // 404 y no 403, para que un endpoint deshabilitado parezca no existir
             throw new NotFoundException("Not found");
         }
         assignments.deleteAllInBatch();

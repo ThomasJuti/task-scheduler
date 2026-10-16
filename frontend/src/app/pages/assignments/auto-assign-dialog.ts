@@ -15,7 +15,6 @@ import { isWorkingDay, nextWorkingDay, startOfToday, toIsoDate } from '../../cor
 import { FieldErrorPipe } from '../../shared/field-error.pipe';
 import { SkillChips } from '../../shared/skill-chips';
 
-/** Req4 (auto-assignment of the pending tasks): previews the auto-assignment (dry run) and applies it after confirmation. ADMIN only. */
 @Component({
   selector: 'app-auto-assign-dialog',
   imports: [

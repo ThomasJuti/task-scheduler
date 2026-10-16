@@ -125,7 +125,6 @@ export class TasksPage {
   }
 }
 
-/** Matches the task name, one of its skills or the assigned worker's name (query already lower-cased). */
 function matchesSearch(task: Task, query: string): boolean {
   return (
     !query ||

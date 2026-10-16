@@ -21,10 +21,6 @@ export function problemMessage(error: unknown): string {
   return toProblem(error).detail ?? 'Unexpected error';
 }
 
-/**
- * Copies the backend field errors ({@code errors: {field: message}}) onto the matching form controls, so
- * they show up under each input. Returns true when at least one field was matched.
- */
 export function applyServerErrors(form: FormGroup, error: unknown): boolean {
   const errors = toProblem(error).errors ?? {};
   let matched = false;

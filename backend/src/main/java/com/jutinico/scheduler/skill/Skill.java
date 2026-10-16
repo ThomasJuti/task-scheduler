@@ -31,7 +31,7 @@ public class Skill {
         return name;
     }
 
-    /** Skills are compared case-insensitively ("java" == "Java"). */
+    /** Los skills se comparan sin distinguir mayúsculas ("java" == "Java"). */
     public String key() {
         return name.toLowerCase(Locale.ROOT);
     }

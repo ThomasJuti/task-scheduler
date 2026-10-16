@@ -1,6 +1,5 @@
 import { Component, input } from '@angular/core';
 
-/** Read-only list of skills; skills in {@code missing} are highlighted. */
 @Component({
   selector: 'app-skill-chips',
   template: `

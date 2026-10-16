@@ -23,11 +23,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-/**
- * Turns every error into an RFC 9457 {@code application/problem+json} body. Field validation errors are
- * returned in an {@code errors} map ({@code field -> message}) so the frontend can show them per input.
- * Internal details (stack traces, SQL) are never exposed.
- */
+/** Convierte cada error en un cuerpo problem+json (RFC 9457); los errores de campo van en un mapa {@code errors}. */
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 

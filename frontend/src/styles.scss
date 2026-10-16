@@ -45,7 +45,6 @@ body {
 
 .mat-icon, mat-icon { font-family: 'Material Symbols Outlined'; }
 
-/* ---------- Accessibility ---------- */
 :focus-visible { outline: 2px solid var(--mat-sys-primary); outline-offset: 2px; }
 .skip-link { position: absolute; left: 12px; top: -48px; z-index: 100; padding: 10px 16px; border-radius: 8px;
   background: var(--mat-sys-primary); color: var(--mat-sys-on-primary); text-decoration: none; font-weight: 600;
@@ -53,7 +52,6 @@ body {
   &:focus { top: 12px; } }
 @media (prefers-reduced-motion: reduce) { .skip-link { transition: none; } }
 
-/* ---------- Layout ---------- */
 .topbar {
   position: sticky; top: 0; z-index: 10;
   background: var(--app-surface) !important;
@@ -88,8 +86,8 @@ body {
 .panel-title-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px;
   h2 { margin: 4px 0; } }
 .compact { width: 200px; }
-/* minmax(0, …) lets a column shrink below its content, so a wide table scrolls inside its panel instead of
-   pushing the panel past the screen edge. */
+/* minmax(0, …) deja que una columna se encoja por debajo de su contenido, así una tabla ancha hace scroll dentro de su
+   panel en vez de empujarlo fuera de la pantalla. */
 .grid-2 { display: grid; grid-template-columns: minmax(320px, 2fr) minmax(0, 3fr); gap: 20px; align-items: start;
   > * { min-width: 0; } }
 @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } .nav a { min-width: 0; } }
@@ -131,7 +129,6 @@ td.empty { padding: 32px; text-align: center; color: var(--app-muted); }
 .mat-mdc-dialog-content.form-column { padding-top: 8px; }
 .full-width { width: 100%; }
 
-/* ---------- Skills ---------- */
 .skill-list { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
 .skill { background: var(--app-skill-bg); color: var(--app-skill-fg); font-size: 12px; font-weight: 500;
   padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
@@ -139,7 +136,6 @@ td.empty { padding: 32px; text-align: center; color: var(--app-muted); }
 .missing-text { color: var(--app-danger-fg); font-size: 12px; }
 .worker-skills { margin: -4px 0 12px; }
 
-/* ---------- Task picker ---------- */
 .task-picker { border: 1px solid var(--app-border); border-radius: 12px; overflow: hidden; margin-bottom: 8px; }
 .task-picker-header { display: flex; justify-content: space-between; padding: 10px 14px; background: var(--app-surface-2);
   border-bottom: 1px solid var(--app-border); font-weight: 600; }
@@ -147,7 +143,6 @@ td.empty { padding: 32px; text-align: center; color: var(--app-muted); }
 .task-list .mat-mdc-list-item { height: auto !important; padding-top: 6px; padding-bottom: 6px; }
 .task-picker .empty { padding: 12px 14px; margin: 0; }
 
-/* ---------- Dialogs ---------- */
 .simple-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 12px;
   th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--app-border); }
   th { color: var(--app-muted); font-weight: 600; } }
@@ -157,14 +152,12 @@ td.empty { padding: 32px; text-align: center; color: var(--app-muted); }
 button.danger { --mat-button-filled-container-color: var(--app-danger); }
 .snack-error { --mat-snack-bar-container-color: #7f1d1d; }
 
-/* ---------- Login ---------- */
 .login-page { min-height: 100vh; display: grid; place-items: center; padding: 16px;
   background: var(--app-bg); }
 .login-card { width: 100%; max-width: 400px; padding: 12px 8px 8px; background: var(--app-surface); box-shadow: var(--app-shadow);
   form { margin-top: 16px; } }
 .login-icon { color: var(--mat-sys-primary); font-size: 40px; width: 40px; height: 40px; }
 
-/* ---------- Feedback ---------- */
 button.mat-mdc-unelevated-button:not(:disabled):active,
 button.mat-mdc-button:not(:disabled):active { transform: translateY(1px) scale(.98); }
 button.mat-mdc-unelevated-button, button.mat-mdc-button { transition: transform .12s var(--app-ease); }

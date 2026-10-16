@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stops the containers. Use --clean to also delete the database volume.
+# Detiene los contenedores. Con --clean también borra el volumen de la base de datos.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 cd "$ROOT_DIR"

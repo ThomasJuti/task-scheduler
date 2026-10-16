@@ -14,7 +14,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @EntityGraph(attributePaths = "skills")
     List<Task> findByStatusOrderByIdAsc(TaskStatus status);
 
-    /** Pending tasks with no assignment: the input of the auto-assignment. */
     @EntityGraph(attributePaths = "skills")
     @Query("""
             select t from Task t

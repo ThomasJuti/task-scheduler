@@ -20,14 +20,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-/** Full application against a real PostgreSQL (Testcontainers), called through MockMvc with real JWTs. */
+/** Aplicación completa contra un PostgreSQL real (Testcontainers), llamada con MockMvc y JWT reales. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Import(TestcontainersConfiguration.class)
 abstract class ApiIntegrationTest {
 
-    /** A Monday in the future, so @FutureOrPresent start dates are always valid. */
+    /** Un lunes futuro, para que las fechas de inicio con @FutureOrPresent siempre sean válidas. */
     static final LocalDate NEXT_MONDAY = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.MONDAY));
 
     @Autowired

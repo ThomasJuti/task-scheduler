@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 class WorkCalendarTest {
 
-    // 2026-10-19 is a Monday
+    // 2026-10-19 es lunes
     private static final LocalDate MONDAY = LocalDate.of(2026, 10, 19);
     private static final LocalDate FRIDAY = MONDAY.plusDays(4);
     private static final LocalDate SATURDAY = MONDAY.plusDays(5);
@@ -37,7 +37,7 @@ class WorkCalendarTest {
 
     @Test
     void effortIsSpreadOverWorkingDaysSkippingTheWeekend() {
-        // 4 h/day, 10 h starting Thursday: Thu 4, Fri 4, (weekend), Mon 2
+        // 4 h/día, 10 h desde el jueves: jue 4, vie 4, (fin de semana), lun 2
         LocalDate thursday = MONDAY.plusDays(3);
         Schedule schedule = WorkCalendar.plan(4, Map.of(), thursday, 10);
 
@@ -57,7 +57,7 @@ class WorkCalendarTest {
 
     @Test
     void existingLoadOnlyLeavesTheFreeHours() {
-        // Monday fully booked, Tuesday has 5 of 8 hours booked
+        // Lunes completo, el martes tiene 5 de 8 horas reservadas
         Map<LocalDate, Integer> used = Map.of(MONDAY, 8, MONDAY.plusDays(1), 5);
         Schedule schedule = WorkCalendar.plan(8, used, MONDAY, 7);
 

@@ -100,7 +100,6 @@ export interface LoginResponse {
   expiresAt: string;
 }
 
-/** RFC 9457 error body returned by the API. */
 export interface Problem {
   status: number;
   title?: string;

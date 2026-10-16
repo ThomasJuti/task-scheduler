@@ -51,7 +51,6 @@ public class Assignment {
         applySchedule(schedule);
     }
 
-    /** Moves the assignment to another worker and/or date with a freshly computed schedule. */
     public void reschedule(Worker newWorker, Schedule schedule) {
         this.worker = newWorker;
         applySchedule(schedule);

@@ -25,7 +25,7 @@ class AssignmentApiTest extends ApiIntegrationTest {
                         "{\"workerId\":%d,\"taskIds\":[%d,%d],\"startDate\":\"%s\"}".formatted(ana, api, db, NEXT_MONDAY)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$", hasSize(2)))
-                // API: Mon 8 + Tue 4; DB: Tue 4 + Wed 2
+                // API: lun 8 + mar 4; BD: mar 4 + mié 2
                 .andExpect(jsonPath("$[0].startDate").value(NEXT_MONDAY.toString()))
                 .andExpect(jsonPath("$[0].endDate").value(NEXT_MONDAY.plusDays(1).toString()))
                 .andExpect(jsonPath("$[1].startDate").value(NEXT_MONDAY.plusDays(1).toString()))
@@ -50,7 +50,7 @@ class AssignmentApiTest extends ApiIntegrationTest {
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.detail", containsString("missing skills [Java]")));
 
-        // all or nothing: the compatible task was not assigned either
+        // todo o nada: la tarea compatible tampoco se asignó
         mvc.perform(as(userToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(0)));
     }
 
@@ -112,7 +112,7 @@ class AssignmentApiTest extends ApiIntegrationTest {
         mvc.perform(json(adminToken, put("/api/workers/" + ana),
                         "{\"name\":\"Ana\",\"availabilityHoursPerDay\":8,\"skills\":[\"SQL\"]}"))
                 .andExpect(status().isConflict());
-        // renaming is fine
+        // renombrar está permitido
         mvc.perform(json(adminToken, put("/api/tasks/" + task),
                         "{\"name\":\"API v2\",\"effortHours\":8,\"skills\":[\"java\"],\"status\":\"NOT_DONE\"}"))
                 .andExpect(status().isOk());

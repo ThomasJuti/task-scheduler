@@ -30,12 +30,12 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Stateless JWT security. Permissions by role:
+ * Seguridad JWT sin estado. Permisos por rol:
  * <ul>
- *   <li>USER and ADMIN: read everything, change a task's status, assign / reassign / unassign tasks.</li>
- *   <li>ADMIN only: create / edit / delete tasks and workers, auto-assignment, admin endpoints.</li>
+ *   <li>USER y ADMIN: leer todo, cambiar el estado de una tarea, asignar / reasignar / desasignar tareas.</li>
+ *   <li>Solo ADMIN: crear / editar / borrar tareas y trabajadores, asignación automática, endpoints de admin.</li>
  * </ul>
- * The services repeat the ADMIN checks with {@code @PreAuthorize} as defence in depth.
+ * Los servicios repiten las comprobaciones de ADMIN con {@code @PreAuthorize} como defensa en profundidad.
  */
 @Configuration
 @EnableMethodSecurity
@@ -74,7 +74,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Maps the {@code roles} claim (e.g. ["ADMIN"]) to the authorities ROLE_ADMIN / ROLE_USER. */
+    /** Convierte el claim {@code roles} (ej. ["ADMIN"]) en las autoridades ROLE_ADMIN / ROLE_USER. */
     private static JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter authorities = new JwtGrantedAuthoritiesConverter();
         authorities.setAuthoritiesClaimName("roles");

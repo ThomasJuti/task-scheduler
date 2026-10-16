@@ -9,10 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Creates (or updates) the two demo accounts from environment variables, so no password lives in the code
- * or in the migrations. An account whose password variable is empty is not created.
- */
+/** Crea o actualiza las cuentas de demo desde variables de entorno, para que ninguna contraseña viva en el código. */
 @Component
 public class UserSeeder implements ApplicationRunner {
 

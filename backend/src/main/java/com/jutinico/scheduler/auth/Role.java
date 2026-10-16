@@ -1,8 +1,8 @@
 package com.jutinico.scheduler.auth;
 
 public enum Role {
-    /** Full access: CRUD of tasks and workers, auto-assignment, data reset. */
+    /** Acceso total: CRUD de tareas y trabajadores, asignación automática, reinicio de datos. */
     ADMIN,
-    /** Read access plus "moving" tasks: change status and assign / reassign / unassign. */
+    /** Lectura más "mover" tareas: cambiar estado y asignar / reasignar / desasignar. */
     USER
 }

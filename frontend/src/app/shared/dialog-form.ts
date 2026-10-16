@@ -5,8 +5,8 @@ import { Observable } from 'rxjs';
 import { applyServerErrors } from '../core/http/problem';
 
 /**
- * Submit flow shared by the edit dialogs: an invalid form only shows its errors; otherwise the request is
- * sent and the dialog closes with the saved entity, or the form is re-enabled with the backend field errors.
+ * Flujo de envío compartido por los diálogos de edición: un formulario inválido solo muestra sus errores; si no,
+ * se envía la petición y el diálogo se cierra con la entidad guardada, o el formulario se reactiva con los errores del backend.
  */
 export function submitDialogForm<T>(
   form: FormGroup,

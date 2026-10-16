@@ -27,7 +27,6 @@ export class ConfirmDialog {
   protected readonly data = inject<ConfirmData>(MAT_DIALOG_DATA);
 }
 
-/** Asks for confirmation and only then runs {@code action}; emits its result, or nothing if cancelled. */
 export function confirmThen<T>(
   dialog: MatDialog,
   data: ConfirmData,

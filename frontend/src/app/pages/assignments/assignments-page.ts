@@ -27,7 +27,6 @@ import { AssignmentsTable } from './assignments-table';
 import { AutoAssignDialog } from './auto-assign-dialog';
 import { ReassignDialog, ReassignDialogData } from './reassign-dialog';
 
-/** Manual assignment form, current assignments and the entry point to the auto-assignment. */
 @Component({
   selector: 'app-assignments-page',
   imports: [
@@ -94,7 +93,7 @@ export class AssignmentsPage {
 
   constructor() {
     this.load();
-    // Changing the worker clears tasks that the new worker cannot take.
+    // Al cambiar de trabajador se descartan las tareas que el nuevo no puede tomar.
     this.form.controls.workerId.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       const allowed = new Set(
         this.pendingTasks()
@@ -117,7 +116,7 @@ export class AssignmentsPage {
       this.form.markAllAsTouched();
       return;
     }
-    // keep the order shown in the list, which is the order the worker will do them
+    // mantiene el orden mostrado en la lista, que es el orden en que el trabajador las hará
     const ordered = this.pendingTasks()
       .map((t) => t.id)
       .filter((id) => taskIds.includes(id));

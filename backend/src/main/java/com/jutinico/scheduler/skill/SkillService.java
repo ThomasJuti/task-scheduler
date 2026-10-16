@@ -28,10 +28,7 @@ public class SkillService {
         return skills.findAllByOrderByNameAsc().stream().map(Skill::getName).toList();
     }
 
-    /**
-     * Returns the skill entities for the given names, creating the ones that do not exist yet.
-     * Names are normalized (trimmed, whitespace collapsed) and de-duplicated case-insensitively.
-     */
+    /** Devuelve los skills de los nombres, creando los que faltan. Los nombres se normalizan y se deduplican sin distinguir mayúsculas. */
     @Transactional
     public Set<Skill> resolve(Collection<String> names) {
         Map<String, String> byKey = new LinkedHashMap<>();

@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import jakarta.persistence.Embeddable;
 
-/** Hours a worker spends on an assignment on a given working day. */
 @Embeddable
 public class Allocation {
 

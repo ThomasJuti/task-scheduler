@@ -51,7 +51,7 @@ export class TaskDialog {
       this.data.task?.name ?? '',
       [Validators.required, Validators.maxLength(TASK_NAME_MAX), notBlank],
     ],
-    // empty for a new task, so the user has to type a value
+    // vacío en una tarea nueva, para que el usuario tenga que escribir un valor
     effortHours: this.fb.control<number | null>(this.data.task?.effortHours ?? null, [
       Validators.required,
       Validators.min(EFFORT_MIN),
@@ -76,7 +76,7 @@ export class TaskDialog {
     );
   }
 
-  /** Only called on a valid form, where the required validator guarantees an effort. */
+  /** Solo se llama con el formulario válido, donde el validador required garantiza un esfuerzo. */
   private toRequest(): TaskRequest {
     const { name, effortHours, skills, status } = this.form.getRawValue();
     if (effortHours === null) throw new Error('effortHours is required');

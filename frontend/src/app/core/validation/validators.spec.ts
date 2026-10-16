@@ -31,7 +31,7 @@ describe('validators', () => {
   it('notBlank rejects whitespace-only values', () => {
     expect(notBlank(new FormControl('   '))).toEqual({ blank: true });
     expect(notBlank(new FormControl('Task'))).toBeNull();
-    expect(notBlank(new FormControl(''))).toBeNull(); // handled by required
+    expect(notBlank(new FormControl(''))).toBeNull(); // lo maneja required
   });
 
   it('integer rejects decimals', () => {

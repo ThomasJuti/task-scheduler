@@ -54,7 +54,7 @@ public class Worker {
         return skills;
     }
 
-    /** Existing schedules are not recomputed; a new availability only applies to future assignments. */
+    /** Las planificaciones existentes no se recalculan; una nueva disponibilidad solo aplica a asignaciones futuras. */
     public void updateDetails(String name, int availabilityHoursPerDay, Set<Skill> skills) {
         this.name = name;
         this.availabilityHoursPerDay = availabilityHoursPerDay;

@@ -1,9 +1,6 @@
 package com.jutinico.scheduler.common;
 
-/**
- * Size and range limits of the request fields, used by the DTO validation annotations. The database constraints
- * ({@code V1__init.sql}) and the frontend forms ({@code frontend/src/app/core/validation/limits.ts}) mirror them.
- */
+/** Límites de los campos de las peticiones. Las restricciones de BD ({@code V1__init.sql}) y el frontend ({@code limits.ts}) los replican. */
 public final class Limits {
 
     public static final int TASK_NAME_MAX = 120;

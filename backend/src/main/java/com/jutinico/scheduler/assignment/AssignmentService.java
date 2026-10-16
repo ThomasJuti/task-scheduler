@@ -27,10 +27,7 @@ import com.jutinico.scheduler.worker.WorkerRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Req3 (manual assignment of tasks to a worker from a start date), enforcing Req3a (skills rule: a task's skills
- * must be a subset of the worker's). Available to USER and ADMIN.
- */
+/** Asignación manual (Req3). Aplica la regla de skills (Req3a): los skills de la tarea deben ser un subconjunto de los del trabajador. */
 @Service
 public class AssignmentService {
 
@@ -50,10 +47,7 @@ public class AssignmentService {
         return found.stream().map(AssignmentService::toResponse).toList();
     }
 
-    /**
-     * Assigns the tasks to the worker, all or nothing: if any task is invalid nothing is saved. Tasks are
-     * scheduled one after the other, in the given order, on the worker's free hours from {@code startDate}.
-     */
+    /** Todo o nada: si una tarea no es válida no se guarda ninguna. Las tareas se planifican en el orden recibido. */
     @Transactional
     public List<AssignmentResponse> assign(AssignRequest request) {
         Worker worker = lockWorker(request.workerId());
@@ -84,10 +78,7 @@ public class AssignmentService {
         return created;
     }
 
-    /**
-     * Moves a task to another worker and/or start date, re-checking Req3a (skills rule) and recomputing the
-     * dates. Only the target worker is locked: freeing hours on the previous worker cannot overbook anyone.
-     */
+    /** Solo se bloquea al trabajador destino: liberar horas del anterior no puede sobrecargar a nadie. */
     @Transactional
     public AssignmentResponse reassign(Long id, ReassignRequest request) {
         Assignment assignment = assignments.findById(id).orElseThrow(() -> NotFoundException.of("Assignment", id));
@@ -111,10 +102,7 @@ public class AssignmentService {
         assignments.delete(assignment);
     }
 
-    /**
-     * Loads the worker with a row lock held until commit, before its load is read: otherwise two concurrent
-     * requests could both see the same free hours and overbook the worker's daily availability.
-     */
+    /** Bloquea la fila del trabajador hasta el commit; si no, dos peticiones concurrentes podrían reservar las mismas horas libres. */
     private Worker lockWorker(Long id) {
         return workers.findByIdForUpdate(id).orElseThrow(() -> NotFoundException.of("Worker", id));
     }
@@ -128,7 +116,6 @@ public class AssignmentService {
         return ids.stream().map(byId::get).toList();
     }
 
-    /** Req3a (skills rule): the task's skills must be a subset of the worker's skills. */
     private static void requireSkills(Worker worker, Task task) {
         List<String> missing = Skills.missing(task.getSkills(), worker.getSkills());
         if (!missing.isEmpty()) {

@@ -11,7 +11,6 @@ final class WorkerLoad {
     private WorkerLoad() {
     }
 
-    /** Hours already booked per day by the given assignments, optionally ignoring one of them. */
     static Map<LocalDate, Integer> usedHours(Collection<Assignment> assignments, Long excludedAssignmentId) {
         Map<LocalDate, Integer> used = new HashMap<>();
         assignments.stream()

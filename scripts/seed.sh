@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Loads demo data through the REST API (as admin): wipes tasks/workers/assignments and creates
-# 6 workers and 14 tasks. Two tasks need skills nobody has, to show what auto-assignment reports.
-# Requires the app running (scripts/run.sh) and ADMIN_RESET_ENABLED=true in .env.
+# Carga datos de demo por la API REST (como admin): borra tareas/trabajadores/asignaciones y crea
+# 6 trabajadores y 14 tareas. Dos tareas piden skills que nadie tiene, para mostrar qué reporta la asignación automática.
+# Requiere la app corriendo (scripts/run.sh) y ADMIN_RESET_ENABLED=true en .env.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 require curl ""

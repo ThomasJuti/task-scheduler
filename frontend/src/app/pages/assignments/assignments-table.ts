@@ -7,7 +7,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { Assignment } from '../../core/models';
 
-/** Current assignments with their dates; the row actions are handled by the parent page. */
 @Component({
   selector: 'app-assignments-table',
   imports: [DatePipe, MatTableModule, MatButtonModule, MatIconModule, MatTooltipModule],
@@ -20,7 +19,6 @@ export class AssignmentsTable {
 
   protected readonly columns = ['task', 'worker', 'dates', 'actions'];
 
-  /** Hours per day, shown as a tooltip on the dates. */
   protected allocationText(assignment: Assignment): string {
     return assignment.allocations.map((al) => `${al.date}: ${al.hours} h`).join(' · ');
   }

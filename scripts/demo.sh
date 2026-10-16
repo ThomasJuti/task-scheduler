@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# End-to-end demo for the presentation: starts the app, loads the demo data and walks through the
-# requirements against the real API (manual assignment, Req3a rejection, roles, auto-assignment).
+# Demo de extremo a extremo para la presentación: arranca la app, carga los datos de demo y recorre los
+# requisitos contra la API real (asignación manual, rechazo Req3a, roles, asignación automática).
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 require python3 "It is used to pretty-print the JSON responses."
@@ -12,11 +12,11 @@ echo
 ensure_env
 
 pretty() { python3 -m json.tool; }
-# id_of COLLECTION NAME -> id of the item with that name
+# id_of COLECCION NOMBRE -> id del elemento con ese nombre
 id_of() {
   api GET "/api/$1" "$ADMIN" | jq -er --arg name "$2" 'first(.[] | select(.name == $name) | .id)'
 }
-# expect STATUS METHOD PATH TOKEN [JSON] -> prints the response and checks the HTTP status
+# expect ESTADO METODO RUTA TOKEN [JSON] -> imprime la respuesta y comprueba el estado HTTP
 expect() {
   local want="$1"; shift
   local method="$1" path="$2" token="$3" body="${4:-}" out code

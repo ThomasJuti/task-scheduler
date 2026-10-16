@@ -46,7 +46,6 @@ public class AppUser {
         return role;
     }
 
-    /** Used on startup to align the account with the configured password and role. */
     public void changeCredentials(String passwordHash, Role role) {
         this.passwordHash = passwordHash;
         this.role = role;

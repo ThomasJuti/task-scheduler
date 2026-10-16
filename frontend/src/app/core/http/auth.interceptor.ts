@@ -4,7 +4,6 @@ import { catchError, throwError } from 'rxjs';
 
 import { AuthService, LOGIN_URL } from '../auth/auth.service';
 
-/** Adds the bearer token to API calls and ends the session when the API answers 401. */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
   const isApi = request.url.startsWith('/api/');

@@ -1,7 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { ValidationErrors } from '@angular/forms';
 
-/** Turns a control's validation errors into a readable message (first error wins). */
 @Pipe({ name: 'fieldError' })
 export class FieldErrorPipe implements PipeTransform {
   transform(errors: ValidationErrors | null | undefined): string {

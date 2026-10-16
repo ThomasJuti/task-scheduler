@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Builds the application.
-#   scripts/build.sh          -> builds the Docker images (only Docker needed)
-#   scripts/build.sh --local  -> builds the backend jar (JDK 21) and the Angular bundle (Node 22+)
+# Compila la aplicación.
+#   scripts/build.sh          -> construye las imágenes Docker (solo requiere Docker)
+#   scripts/build.sh --local  -> compila el jar del backend (JDK 21) y el bundle de Angular (Node 22+)
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 cd "$ROOT_DIR"

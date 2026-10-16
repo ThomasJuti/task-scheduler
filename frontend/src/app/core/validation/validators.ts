@@ -2,10 +2,10 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 import { SKILL_NAME_MAX } from './limits';
 
-/** Same rule as the backend: letters/digits first, then letters, digits, spaces and + # . - / */
+/** Misma regla que el backend: primero letra/dígito, luego letras, dígitos, espacios y + # . - / */
 export const SKILL_PATTERN = /^\s*[\p{L}\p{N}][\p{L}\p{N} +#.\-/]*$/u;
 
-/** Rejects values made only of spaces (Validators.required accepts them). */
+/** Rechaza valores hechos solo de espacios (Validators.required los acepta). */
 export const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
   return typeof value === 'string' && value.length > 0 && value.trim().length === 0
@@ -13,14 +13,12 @@ export const notBlank: ValidatorFn = (control: AbstractControl): ValidationError
     : null;
 };
 
-/** Whole numbers only (the API works with integer hours). */
 export const integer: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
   if (value === null || value === undefined || value === '') return null;
   return Number.isInteger(Number(value)) ? null : { integer: true };
 };
 
-/** Validates a string[] of skills: count limits, format, length and no case-insensitive duplicates. */
 export function skillsValidator(max: number): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const skills = (control.value ?? []) as string[];

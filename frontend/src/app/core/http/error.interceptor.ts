@@ -6,10 +6,7 @@ import { catchError, throwError } from 'rxjs';
 import { LOGIN_URL } from '../auth/auth.service';
 import { toProblem } from './problem';
 
-/**
- * Shows API errors in a snackbar. Field validation errors (400 with an {@code errors} map) and the login
- * call are left to the component, which displays them next to the inputs.
- */
+/** Muestra los errores de la API en un snackbar, salvo login y errores de validación de campo, que los componentes muestran junto a los inputs. */
 export const errorInterceptor: HttpInterceptorFn = (request, next) => {
   const snackBar = inject(MatSnackBar);
   return next(request).pipe(

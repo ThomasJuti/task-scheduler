@@ -10,14 +10,12 @@ import com.jutinico.scheduler.config.AppSecurityProperties;
 import org.springframework.stereotype.Service;
 
 /**
- * Basic brute-force protection: after N failed logins for the same username + IP within the lock duration, the
- * pair is locked for that same duration. Failures older than that are forgotten, so occasional typos never add
- * up to a lock and the map does not grow forever. In memory, which is enough for a single instance.
+ * Protección contra fuerza bruta: tras N logins fallidos del mismo usuario + IP dentro de la duración del bloqueo,
+ * el par queda bloqueado esa misma duración. En memoria, suficiente para una sola instancia.
  */
 @Service
 public class LoginAttemptService {
 
-    /** Failures counted so far and when the last one happened (also when the lock, if any, started). */
     private record Attempts(int failures, Instant lastFailure) {
     }
 
@@ -32,7 +30,6 @@ public class LoginAttemptService {
         this.clock = clock;
     }
 
-    /** Remaining lock time, or {@link Duration#ZERO} when the key may try again. */
     public Duration lockRemaining(String key) {
         Attempts current = attempts.get(key);
         if (current == null || current.failures() < maxAttempts) {
@@ -60,8 +57,8 @@ public class LoginAttemptService {
     }
 
     /**
-     * A failure counts for {@code lockDuration}. While locked no new failures are recorded (the login is
-     * rejected before the password is checked), so the lock also ends {@code lockDuration} after the last one.
+     * Mientras está bloqueado no se registran fallos (el login se rechaza antes de revisar la contraseña), así que el
+     * bloqueo termina {@code lockDuration} después del último fallo.
      */
     private Instant expiry(Attempts entry) {
         return entry.lastFailure().plus(lockDuration);

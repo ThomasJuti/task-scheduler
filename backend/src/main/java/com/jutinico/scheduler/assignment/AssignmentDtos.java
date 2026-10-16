@@ -16,20 +16,18 @@ public final class AssignmentDtos {
     private AssignmentDtos() {
     }
 
-    /** Req3 (manual assignment): assigns one or more tasks to a worker from a start date. */
     public record AssignRequest(
             @NotNull Long workerId,
             @NotEmpty @Size(max = Limits.TASKS_PER_ASSIGNMENT_MAX) @UniqueElements List<@NotNull Long> taskIds,
             @NotNull @FutureOrPresent LocalDate startDate) {
     }
 
-    /** Moves an assignment to another worker and/or start date. */
     public record ReassignRequest(
             @NotNull Long workerId,
             @NotNull @FutureOrPresent LocalDate startDate) {
     }
 
-    /** Req4 (auto-assignment of the pending tasks). {@code startDate} defaults to today; {@code dryRun} only previews the result. */
+    /** {@code startDate} es hoy por defecto; {@code dryRun} solo muestra una vista previa. */
     public record AutoAssignRequest(@FutureOrPresent LocalDate startDate, Boolean dryRun) {
     }
 

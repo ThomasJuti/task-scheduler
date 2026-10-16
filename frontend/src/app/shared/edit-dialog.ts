@@ -5,8 +5,8 @@ import { Observable, filter, switchMap } from 'rxjs';
 import { SkillsApi } from '../core/api/skills-api';
 
 /**
- * Opens a create/edit dialog once the known skills are loaded (they feed the skills autocomplete).
- * Emits the saved entity, or nothing when the dialog is cancelled.
+ * Abre un diálogo de crear/editar cuando los skills conocidos ya cargaron (alimentan el autocompletado).
+ * Emite la entidad guardada, o nada si se cancela el diálogo.
  */
 export function openEditDialog<D extends { skillOptions: string[] }, R>(
   dialog: MatDialog,
