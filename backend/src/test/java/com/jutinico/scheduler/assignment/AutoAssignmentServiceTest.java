@@ -46,7 +46,7 @@ class AutoAssignmentServiceTest {
         assignments = mock(AssignmentRepository.class);
         workers = mock(WorkerRepository.class);
         tasks = mock(TaskRepository.class);
-        when(assignments.findAllWithWorker()).thenReturn(List.of());
+        when(assignments.findActiveFrom(any())).thenReturn(List.of());
         Clock clock = Clock.fixed(MONDAY.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
         service = new AutoAssignmentService(assignments, workers, tasks, clock);
     }

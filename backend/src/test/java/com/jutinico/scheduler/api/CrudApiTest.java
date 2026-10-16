@@ -31,7 +31,7 @@ class CrudApiTest extends ApiIntegrationTest {
                 .andExpect(jsonPath("$.effortHours").value(8))
                 .andExpect(jsonPath("$.status").value("DONE"));
 
-        mvc.perform(as(adminToken, get("/api/tasks?status=DONE"))).andExpect(jsonPath("$", hasSize(1)));
+        mvc.perform(as(adminToken, get("/api/tasks?status=DONE"))).andExpect(jsonPath("$.content", hasSize(1)));
         mvc.perform(as(adminToken, get("/api/skills"))).andExpect(jsonPath("$", contains("Java", "Spring Boot")));
 
         mvc.perform(as(adminToken, delete("/api/tasks/" + id))).andExpect(status().isNoContent());
@@ -91,10 +91,10 @@ class CrudApiTest extends ApiIntegrationTest {
         assign(ana, assigned);
 
         mvc.perform(as(adminToken, get("/api/tasks?unassigned=true")))
-                .andExpect(jsonPath("$[*].id", contains((int) pending)));
+                .andExpect(jsonPath("$.content[*].id", contains((int) pending)));
         mvc.perform(as(adminToken, get("/api/tasks?unassigned=false")))
-                .andExpect(jsonPath("$[*].id", contains((int) assigned)));
-        mvc.perform(as(adminToken, get("/api/tasks"))).andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$.content[*].id", contains((int) assigned)));
+        mvc.perform(as(adminToken, get("/api/tasks"))).andExpect(jsonPath("$.content", hasSize(2)));
     }
 
     @Test
@@ -105,7 +105,7 @@ class CrudApiTest extends ApiIntegrationTest {
 
         mvc.perform(as(adminToken, delete("/api/workers/" + ana))).andExpect(status().isNoContent());
 
-        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$.content", hasSize(0)));
         mvc.perform(as(adminToken, get("/api/tasks/" + task)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.assignment").doesNotExist());
@@ -119,7 +119,7 @@ class CrudApiTest extends ApiIntegrationTest {
 
         mvc.perform(as(adminToken, delete("/api/tasks/" + task))).andExpect(status().isNoContent());
 
-        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$.content", hasSize(0)));
         mvc.perform(as(adminToken, get("/api/workers/" + ana))).andExpect(jsonPath("$.assignedHours").value(0));
     }
 

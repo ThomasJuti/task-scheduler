@@ -7,7 +7,11 @@ import com.jutinico.scheduler.assignment.AssignmentDtos.AssignmentResponse;
 import com.jutinico.scheduler.assignment.AssignmentDtos.AutoAssignRequest;
 import com.jutinico.scheduler.assignment.AssignmentDtos.AutoAssignResponse;
 import com.jutinico.scheduler.assignment.AssignmentDtos.ReassignRequest;
+import com.jutinico.scheduler.common.Limits;
+import com.jutinico.scheduler.common.PageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,9 +36,13 @@ public class AssignmentController {
         this.autoAssignmentService = autoAssignmentService;
     }
 
+    /** Paginado: {@code ?page=0&size=20&workerId=1}. */
     @GetMapping
-    public List<AssignmentResponse> list(@RequestParam(required = false) Long workerId) {
-        return assignmentService.list(workerId);
+    public PageResponse<AssignmentResponse> list(
+            @RequestParam(required = false) Long workerId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "" + Limits.PAGE_SIZE_DEFAULT) @Min(1) @Max(Limits.PAGE_SIZE_MAX) int size) {
+        return assignmentService.list(workerId, page, size);
     }
 
     @PostMapping

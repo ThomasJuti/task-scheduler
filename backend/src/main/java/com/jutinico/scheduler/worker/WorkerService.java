@@ -3,10 +3,12 @@ package com.jutinico.scheduler.worker;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.jutinico.scheduler.assignment.Assignment;
 import com.jutinico.scheduler.assignment.AssignmentRepository;
+import com.jutinico.scheduler.assignment.WorkerLoadSummary;
 import com.jutinico.scheduler.common.ConflictException;
 import com.jutinico.scheduler.common.Names;
 import com.jutinico.scheduler.common.NotFoundException;
@@ -32,18 +34,23 @@ public class WorkerService {
         this.skillService = skillService;
     }
 
+    /**
+     * Todos los trabajadores (es un conjunto acotado y lo usan los selectores de la UI). La carga de cada uno sale de
+     * un GROUP BY, sin traer las asignaciones a memoria.
+     */
     @Transactional(readOnly = true)
     public List<WorkerResponse> list() {
-        Map<Long, List<Assignment>> byWorker = assignments.findAllWithWorker().stream()
-                .collect(Collectors.groupingBy(a -> a.getWorker().getId()));
+        Map<Long, WorkerLoadSummary> load = assignments.summarizeLoadByWorker().stream()
+                .collect(Collectors.toMap(WorkerLoadSummary::workerId, Function.identity()));
         return workers.findAllByOrderByIdAsc().stream()
-                .map(w -> toResponse(w, byWorker.getOrDefault(w.getId(), List.of())))
+                .map(w -> toResponse(w, load.get(w.getId())))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public WorkerResponse get(Long id) {
-        return toResponse(find(id), assignments.findByWorkerId(id));
+        Worker worker = find(id);
+        return toResponse(worker, summarize(id, assignments.findByWorkerId(id)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -51,7 +58,7 @@ public class WorkerService {
     public WorkerResponse create(WorkerRequest request) {
         Worker worker = new Worker(Names.normalize(request.name()), request.availabilityHoursPerDay(),
                 skillService.resolve(request.skills()));
-        return toResponse(workers.save(worker), List.of());
+        return toResponse(workers.save(worker), null);
     }
 
     /**
@@ -73,7 +80,7 @@ public class WorkerService {
             }
         }
         worker.updateDetails(Names.normalize(request.name()), request.availabilityHoursPerDay(), newSkills);
-        return toResponse(worker, current);
+        return toResponse(worker, summarize(id, current));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -88,9 +95,15 @@ public class WorkerService {
         return workers.findById(id).orElseThrow(() -> NotFoundException.of("Worker", id));
     }
 
-    private static WorkerResponse toResponse(Worker worker, List<Assignment> assigned) {
-        int hours = assigned.stream().mapToInt(Assignment::totalHours).sum();
+    private static WorkerLoadSummary summarize(Long workerId, List<Assignment> assigned) {
+        long hours = assigned.stream().mapToInt(Assignment::totalHours).sum();
+        return new WorkerLoadSummary(workerId, (long) assigned.size(), hours);
+    }
+
+    private static WorkerResponse toResponse(Worker worker, WorkerLoadSummary load) {
+        int tasks = load == null ? 0 : load.assignedTasks().intValue();
+        int hours = load == null ? 0 : load.assignedHours().intValue();
         return new WorkerResponse(worker.getId(), worker.getName(), worker.getAvailabilityHoursPerDay(),
-                Skills.names(worker.getSkills()), assigned.size(), hours);
+                Skills.names(worker.getSkills()), tasks, hours);
     }
 }

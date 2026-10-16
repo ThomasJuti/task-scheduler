@@ -34,6 +34,10 @@ public final class TaskDtos {
     public record AssignmentSummary(Long id, Long workerId, String workerName, LocalDate startDate, LocalDate endDate) {
     }
 
+    /** Totales para los resúmenes de la UI, sin tener que traer todas las tareas. */
+    public record TaskStats(long total, long pending, long done, long pendingUnassigned) {
+    }
+
     public record TaskResponse(Long id, String name, int effortHours, List<String> skills, TaskStatus status,
                                AssignmentSummary assignment) {
     }

@@ -36,8 +36,8 @@ public final class AssignmentDtos {
     }
 
     public record AssignmentResponse(Long id, Long workerId, String workerName, Long taskId, String taskName,
-                                     int effortHours, TaskStatus taskStatus, LocalDate startDate, LocalDate endDate,
-                                     List<AllocationResponse> allocations) {
+                                     int effortHours, TaskStatus taskStatus, List<String> taskSkills,
+                                     LocalDate startDate, LocalDate endDate, List<AllocationResponse> allocations) {
     }
 
     public record AutoAssignedItem(Long taskId, String taskName, int effortHours, Long workerId, String workerName,

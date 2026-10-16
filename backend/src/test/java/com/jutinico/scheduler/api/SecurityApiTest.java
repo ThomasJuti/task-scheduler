@@ -81,6 +81,6 @@ class SecurityApiTest extends ApiIntegrationTest {
     void adminCanResetData() throws Exception {
         createTask("API", 4, "[\"Java\"]");
         mvc.perform(as(adminToken, delete("/api/admin/reset"))).andExpect(status().isNoContent());
-        mvc.perform(as(adminToken, get("/api/tasks"))).andExpect(jsonPath("$").isEmpty());
+        mvc.perform(as(adminToken, get("/api/tasks"))).andExpect(jsonPath("$.content").isEmpty());
     }
 }

@@ -16,6 +16,7 @@ import com.jutinico.scheduler.assignment.AssignmentDtos.ReassignRequest;
 import com.jutinico.scheduler.common.BusinessRuleException;
 import com.jutinico.scheduler.common.ConflictException;
 import com.jutinico.scheduler.common.NotFoundException;
+import com.jutinico.scheduler.common.PageResponse;
 import com.jutinico.scheduler.scheduling.Schedule;
 import com.jutinico.scheduler.scheduling.WorkCalendar;
 import com.jutinico.scheduler.skill.Skills;
@@ -24,6 +25,9 @@ import com.jutinico.scheduler.task.TaskRepository;
 import com.jutinico.scheduler.task.TaskStatus;
 import com.jutinico.scheduler.worker.Worker;
 import com.jutinico.scheduler.worker.WorkerRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,10 +45,13 @@ public class AssignmentService {
         this.tasks = tasks;
     }
 
+    /** Una página de asignaciones, por fecha de inicio. */
     @Transactional(readOnly = true)
-    public List<AssignmentResponse> list(Long workerId) {
-        List<Assignment> found = workerId == null ? assignments.findAllWithWorker() : assignments.findByWorkerId(workerId);
-        return found.stream().map(AssignmentService::toResponse).toList();
+    public PageResponse<AssignmentResponse> list(Long workerId, int page, int size) {
+        PageRequest request = PageRequest.of(page, size, Sort.by("startDate", "id"));
+        Page<Assignment> found = workerId == null ? assignments.findPage(request)
+                : assignments.findPageByWorkerId(workerId, request);
+        return PageResponse.of(found, AssignmentService::toResponse);
     }
 
     /** Todo o nada: si una tarea no es válida no se guarda ninguna. Las tareas se planifican en el orden recibido. */
@@ -67,7 +74,8 @@ public class AssignmentService {
             requireSkills(worker, task);
         }
 
-        Map<LocalDate, Integer> used = WorkerLoad.usedHours(assignments.findByWorkerId(worker.getId()), null);
+        Map<LocalDate, Integer> used = WorkerLoad.usedHours(
+                assignments.findActiveByWorkerFrom(worker.getId(), request.startDate()), null);
         List<AssignmentResponse> created = new ArrayList<>();
         for (Task task : requested) {
             Schedule schedule = WorkCalendar.plan(worker.getAvailabilityHoursPerDay(), used, request.startDate(),
@@ -89,7 +97,8 @@ public class AssignmentService {
         }
         requireSkills(worker, task);
 
-        Map<LocalDate, Integer> used = WorkerLoad.usedHours(assignments.findByWorkerId(worker.getId()), assignment.getId());
+        Map<LocalDate, Integer> used = WorkerLoad.usedHours(
+                assignments.findActiveByWorkerFrom(worker.getId(), request.startDate()), assignment.getId());
         Schedule schedule = WorkCalendar.plan(worker.getAvailabilityHoursPerDay(), used, request.startDate(),
                 task.getEffortHours());
         assignment.reschedule(worker, schedule);
@@ -136,7 +145,8 @@ public class AssignmentService {
 
     static AssignmentResponse toResponse(Assignment a) {
         return new AssignmentResponse(a.getId(), a.getWorker().getId(), a.getWorker().getName(), a.getTask().getId(),
-                a.getTask().getName(), a.getTask().getEffortHours(), a.getTask().getStatus(), a.getStartDate(),
+                a.getTask().getName(), a.getTask().getEffortHours(), a.getTask().getStatus(),
+                Skills.names(a.getTask().getSkills()), a.getStartDate(),
                 a.getEndDate(), a.getAllocations().stream()
                         .map(al -> new AllocationResponse(al.getWorkDate(), al.getHours())).toList());
     }

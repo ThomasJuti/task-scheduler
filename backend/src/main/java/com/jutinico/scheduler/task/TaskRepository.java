@@ -7,16 +7,20 @@ import java.util.Optional;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
-public interface TaskRepository extends JpaRepository<Task, Long> {
+public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
 
-    @EntityGraph(attributePaths = "skills")
-    List<Task> findAllByOrderByIdAsc();
+    long countByStatus(TaskStatus status);
 
-    @EntityGraph(attributePaths = "skills")
-    List<Task> findByStatusOrderByIdAsc(TaskStatus status);
+    @Query("""
+            select count(t) from Task t
+            where t.status = com.jutinico.scheduler.task.TaskStatus.NOT_DONE
+              and not exists (select 1 from Assignment a where a.task = t)
+            """)
+    long countPendingUnassigned();
 
     @EntityGraph(attributePaths = "skills")
     @Query("""

@@ -51,7 +51,7 @@ class AssignmentApiTest extends ApiIntegrationTest {
                 .andExpect(jsonPath("$.detail", containsString("missing skills [Java]")));
 
         // todo o nada: la tarea compatible tampoco se asignó
-        mvc.perform(as(userToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(as(userToken, get("/api/assignments"))).andExpect(jsonPath("$.content", hasSize(0)));
     }
 
     @Test
@@ -96,7 +96,7 @@ class AssignmentApiTest extends ApiIntegrationTest {
                 .andExpect(status().isUnprocessableContent());
 
         mvc.perform(as(userToken, delete("/api/assignments/" + assignmentId))).andExpect(status().isNoContent());
-        mvc.perform(as(userToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(as(userToken, get("/api/assignments"))).andExpect(jsonPath("$.content", hasSize(0)));
     }
 
     @Test
@@ -132,14 +132,14 @@ class AssignmentApiTest extends ApiIntegrationTest {
                 .andExpect(jsonPath("$.dryRun").value(true))
                 .andExpect(jsonPath("$.assigned", hasSize(2)))
                 .andExpect(jsonPath("$.unassigned[0].taskName").value("Infra"));
-        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$.content", hasSize(0)));
 
         mvc.perform(json(adminToken, post("/api/assignments/auto"), body.formatted(NEXT_MONDAY, false)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.assigned[0].workerName").value("Ana"))
                 .andExpect(jsonPath("$.assigned[1].workerName").value("Bob"));
-        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$", hasSize(2)));
-        mvc.perform(as(adminToken, get("/api/tasks?unassigned=true"))).andExpect(jsonPath("$", hasSize(1)));
+        mvc.perform(as(adminToken, get("/api/assignments"))).andExpect(jsonPath("$.content", hasSize(2)));
+        mvc.perform(as(adminToken, get("/api/tasks?unassigned=true"))).andExpect(jsonPath("$.content", hasSize(1)));
     }
 
     @Test

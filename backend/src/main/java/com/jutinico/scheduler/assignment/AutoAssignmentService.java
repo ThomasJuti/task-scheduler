@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Asignación automática (Req4), voraz: primero las tareas más grandes (empate: más skills, luego id), cada una al
- * trabajador compatible que la termine antes (empate: menos horas asignadas, luego menor id). Las tareas que
+ * trabajador compatible que la termine antes (empate: menos horas reservadas desde la fecha de inicio, luego menor id). Las tareas que
  * nadie puede tomar se reportan con su motivo.
  */
 @Service
@@ -56,7 +56,7 @@ public class AutoAssignmentService {
         // Una ejecución real bloquea a todos los trabajadores (por id) antes de leer su carga, para que una asignación
         // manual concurrente no reserve las mismas horas. Un dry run no guarda nada, así que no bloquea a nadie.
         List<Worker> allWorkers = dryRun ? workers.findAllByOrderByIdAsc() : workers.findAllForUpdate();
-        Map<Long, WorkerBookings> bookings = loadByWorker(allWorkers);
+        Map<Long, WorkerBookings> bookings = loadByWorker(allWorkers, startDate);
         List<Task> pending = new ArrayList<>(dryRun ? tasks.findPendingUnassigned() : tasks.findPendingUnassignedForUpdate());
         pending.sort(PRIORITY);
 
@@ -80,8 +80,8 @@ public class AutoAssignmentService {
         return new AutoAssignResponse(dryRun, startDate, assigned, unassigned);
     }
 
-    private Map<Long, WorkerBookings> loadByWorker(List<Worker> allWorkers) {
-        Map<Long, List<Assignment>> assignmentsByWorker = assignments.findAllWithWorker().stream()
+    private Map<Long, WorkerBookings> loadByWorker(List<Worker> allWorkers, LocalDate startDate) {
+        Map<Long, List<Assignment>> assignmentsByWorker = assignments.findActiveFrom(startDate).stream()
                 .collect(Collectors.groupingBy(a -> a.getWorker().getId()));
         Map<Long, WorkerBookings> bookings = new HashMap<>();
         for (Worker worker : allWorkers) {
