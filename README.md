@@ -240,11 +240,3 @@ docker-compose.yml      db + backend + frontend
 - **Frontend (25 tests):** validators, dates, skills, table sort to API sort, tasks API query parameters, role directive, server-error mapping, auth service
   + interceptor (token header, logout on 401).
 
-## Assumptions
-
-- "Today" uses the `America/Bogota` time zone (`APP_TIMEZONE`), both in the services and in the `@FutureOrPresent`
-  validation. Public holidays are not considered.
-- Changing a worker's availability keeps the existing schedules (they were valid when planned); new
-  assignments use the new value.
-- One worker can have several tasks in parallel only up to their daily availability; tasks are not split
-  between workers.
